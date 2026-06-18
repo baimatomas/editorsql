@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { DBProvider } from '@/app/providers'
+import { useDB } from '@/app/providers'
 import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
@@ -31,6 +31,7 @@ function listProjects(): string[] {
 }
 
 export default function Home() {
+  const { getDump } = useDB()
   const [visible, setVisible] = useState<Record<PanelKey, boolean>>({
     sidebar: true,
     schema: true,
@@ -58,14 +59,16 @@ export default function Home() {
   const toggle = (key: PanelKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
 
-  const saveProject = () => {
+  const saveProject = async () => {
     const name = prompt('Nombre del proyecto:')
     if (!name || !name.trim()) return
     const key = PROJECT_PREFIX + name.trim()
+    const dump = await getDump()
     const data = JSON.stringify({
       schema: localStorage.getItem('editorsql_schema') ?? '',
       query: localStorage.getItem('editorsql_query') ?? '',
       savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
+      dataDump: dump,
     })
     localStorage.setItem(key, data)
   }
@@ -79,6 +82,10 @@ export default function Home() {
       localStorage.setItem('editorsql_schema', data.schema ?? '')
       localStorage.setItem('editorsql_query', data.query ?? '')
       localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
+      if (data.dataDump) {
+        localStorage.setItem('editorsql_restore_data', data.dataDump)
+        localStorage.setItem('editorsql_restore_flag', 'true')
+      }
       setShowProjects(false)
       location.reload()
     } catch { /* ignore */ }
@@ -92,8 +99,7 @@ export default function Home() {
   const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
 
   return (
-    <DBProvider>
-      <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
+    <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
         <header className="bg-[#007acc] text-white px-4 py-1 text-sm font-semibold flex items-center gap-2 flex-shrink-0">
           <span className="mr-2">EditorSQL</span>
           <span className="text-[11px] font-normal opacity-70 mr-auto">— Práctica PostgreSQL</span>
@@ -210,7 +216,6 @@ export default function Home() {
             </Panel>
           </Group>
         )}
-      </div>
-    </DBProvider>
+    </div>
   )
 }
