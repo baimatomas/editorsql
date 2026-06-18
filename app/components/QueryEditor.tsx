@@ -13,11 +13,11 @@ export default function QueryEditor() {
   useEffect(() => { sqlRef.current = sql }, [sql])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
-  const handleEditorMount: OnMount = useCallback((editor) => {
+  const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editor.addAction({
       id: 'run-query',
       label: 'Run Query',
-      keybindings: [2048 | 13], // Ctrl+Enter
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => {
         runRef.current(sqlRef.current)
       },
