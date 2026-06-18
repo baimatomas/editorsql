@@ -100,6 +100,7 @@ INSERT INTO cursos (titulo, categoria, precio, duracion_horas) VALUES
 ('Visualizaci\u00f3n con Tableau',     'Visualizaci\u00f3n',    5000.00, 40),
 ('SQL desde cero para datos',     'Bases de Datos',   4500.00, 35);`
 
+export const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
 const LS_SAVED = 'editorsql_saved_queries'
 
 const DBContext = createContext<DBContextType | null>(null)

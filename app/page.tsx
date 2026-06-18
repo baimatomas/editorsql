@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { useDB, DEFAULT_SCHEMA } from '@/app/providers'
+import { useDB, DEFAULT_SCHEMA, DEFAULT_PROJECTS } from '@/app/providers'
 import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
@@ -18,7 +18,6 @@ const LABELS: Record<PanelKey, string> = {
 }
 
 const PROJECT_PREFIX = 'editorsql_project_'
-const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
 
 function listProjects(): string[] {
   const names: string[] = []
@@ -62,10 +61,19 @@ export default function Home() {
 
   const saveProject = async () => {
     let name = localStorage.getItem('editorsql_current_project')
+    if (name && DEFAULT_PROJECTS.includes(name)) {
+      alert('No se puede sobrescribir un proyecto de ejemplo.\nUsá "Guardar Como" para crear una copia con otro nombre.')
+      return
+    }
     if (!name) {
       name = prompt('Nombre del proyecto:')
       if (!name || !name.trim()) return
-      localStorage.setItem('editorsql_current_project', name.trim())
+      const trimmed = name.trim()
+      if (localStorage.getItem(PROJECT_PREFIX + trimmed)) {
+        alert('Ya existe un proyecto con ese nombre. Usá "Guardar Como" o elegí otro nombre.')
+        return
+      }
+      localStorage.setItem('editorsql_current_project', trimmed)
     }
     const key = PROJECT_PREFIX + name.trim()
     const dump = await getDump()
@@ -81,7 +89,12 @@ export default function Home() {
   const saveAsProject = async () => {
     const name = prompt('Guardar como:')
     if (!name || !name.trim()) return
-    const key = PROJECT_PREFIX + name.trim()
+    const trimmed = name.trim()
+    const key = PROJECT_PREFIX + trimmed
+    if (localStorage.getItem(key)) {
+      alert('Ya existe un proyecto con ese nombre.')
+      return
+    }
     const dump = await getDump()
     const data = JSON.stringify({
       schema: localStorage.getItem('editorsql_schema') ?? '',
@@ -90,7 +103,7 @@ export default function Home() {
       dataDump: dump,
     })
     localStorage.setItem(key, data)
-    localStorage.setItem('editorsql_current_project', name.trim())
+    localStorage.setItem('editorsql_current_project', trimmed)
   }
 
   const loadProject = (name: string) => {
@@ -115,10 +128,15 @@ export default function Home() {
   const newProject = async () => {
     const name = prompt('Nombre del nuevo proyecto:')
     if (!name || !name.trim()) return
+    const trimmed = name.trim()
+    if (localStorage.getItem(PROJECT_PREFIX + trimmed)) {
+      alert('Ya existe un proyecto con ese nombre.')
+      return
+    }
 
     // Save current state as a project first
     const dump = await getDump()
-    const key = PROJECT_PREFIX + name.trim()
+    const key = PROJECT_PREFIX + trimmed
     const data = JSON.stringify({
       schema: localStorage.getItem('editorsql_schema') ?? '',
       query: localStorage.getItem('editorsql_query') ?? '',
@@ -132,7 +150,7 @@ export default function Home() {
     localStorage.setItem('editorsql_query', 'SELECT * FROM ')
     localStorage.setItem('editorsql_saved_queries', '[]')
 
-    localStorage.setItem('editorsql_current_project', name.trim())
+    localStorage.setItem('editorsql_current_project', trimmed)
 
     // Clear any restore flags from previous project loads
     localStorage.removeItem('editorsql_restore_flag')
@@ -163,6 +181,7 @@ export default function Home() {
   }
 
   const deleteProject = (name: string) => {
+    if (DEFAULT_PROJECTS.includes(name)) return
     localStorage.removeItem(PROJECT_PREFIX + name)
     setProjects(listProjects())
   }
