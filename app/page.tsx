@@ -7,6 +7,12 @@ import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
 import ResultTable from '@/app/components/ResultTable'
+import {
+  saveProjectFile, openProjectFile,
+  saveSessionProject, getSessionProjects,
+  clearDirty, migrateOldProjects,
+  type ProjectData,
+} from '@/app/lib/projectFiles'
 
 type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
 
@@ -17,19 +23,6 @@ const LABELS: Record<PanelKey, string> = {
   results: 'Resultados',
 }
 
-const PROJECT_PREFIX = 'editorsql_project_'
-
-function listProjects(): string[] {
-  const names: string[] = []
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (key?.startsWith(PROJECT_PREFIX)) {
-      names.push(key.slice(PROJECT_PREFIX.length))
-    }
-  }
-  return names
-}
-
 export default function Home() {
   const { getDump } = useDB()
   const [visible, setVisible] = useState<Record<PanelKey, boolean>>({
@@ -38,23 +31,10 @@ export default function Home() {
     query: true,
     results: true,
   })
-  const [showProjects, setShowProjects] = useState(false)
-  const [projects, setProjects] = useState<string[]>([])
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setProjects(listProjects())
-  }, [showProjects])
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowProjects(false)
-      }
-    }
-    if (showProjects) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [showProjects])
+    migrateOldProjects()
+  }, [])
 
   const toggle = (key: PanelKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -68,122 +48,98 @@ export default function Home() {
     if (!name) {
       name = prompt('Nombre del proyecto:')
       if (!name || !name.trim()) return
-      const trimmed = name.trim()
-      if (localStorage.getItem(PROJECT_PREFIX + trimmed)) {
-        alert('Ya existe un proyecto con ese nombre. Usá "Guardar Como" o elegí otro nombre.')
-        return
-      }
-      localStorage.setItem('editorsql_current_project', trimmed)
     }
-    const key = PROJECT_PREFIX + name.trim()
+    const trimmed = name.trim()
     const dump = await getDump()
-    const data = JSON.stringify({
+    const data: ProjectData = {
+      name: trimmed,
       schema: localStorage.getItem('editorsql_schema') ?? '',
       query: localStorage.getItem('editorsql_query') ?? '',
       savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
       dataDump: dump,
-    })
-    localStorage.setItem(key, data)
+    }
+    const json = JSON.stringify(data)
+    const ok = await saveProjectFile(trimmed, json)
+    if (ok) {
+      saveSessionProject(trimmed, data)
+      localStorage.setItem('editorsql_current_project', trimmed)
+      clearDirty()
+    }
   }
 
   const saveAsProject = async () => {
     const name = prompt('Guardar como:')
     if (!name || !name.trim()) return
     const trimmed = name.trim()
-    const key = PROJECT_PREFIX + trimmed
-    if (localStorage.getItem(key)) {
-      alert('Ya existe un proyecto con ese nombre.')
+    if (DEFAULT_PROJECTS.includes(trimmed)) {
+      alert('No se puede usar el nombre de un proyecto de ejemplo.')
       return
     }
     const dump = await getDump()
-    const data = JSON.stringify({
+    const data: ProjectData = {
+      name: trimmed,
       schema: localStorage.getItem('editorsql_schema') ?? '',
       query: localStorage.getItem('editorsql_query') ?? '',
       savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
       dataDump: dump,
-    })
-    localStorage.setItem(key, data)
-    localStorage.setItem('editorsql_current_project', trimmed)
+    }
+    const json = JSON.stringify(data)
+    const ok = await saveProjectFile(trimmed, json)
+    if (ok) {
+      saveSessionProject(trimmed, data)
+      localStorage.setItem('editorsql_current_project', trimmed)
+      clearDirty()
+    }
   }
 
-  const loadProject = (name: string) => {
-    const key = PROJECT_PREFIX + name
-    const raw = localStorage.getItem(key)
-    if (!raw) return
-    try {
-      const data = JSON.parse(raw)
-      localStorage.setItem('editorsql_schema', data.schema ?? '')
-      localStorage.setItem('editorsql_query', data.query ?? '')
-      localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
-      if (data.dataDump) {
-        localStorage.setItem('editorsql_restore_data', data.dataDump)
-        localStorage.setItem('editorsql_restore_flag', 'true')
-      }
-      localStorage.setItem('editorsql_current_project', name)
-      setShowProjects(false)
-      location.reload()
-    } catch { /* ignore */ }
+  const openProject = async () => {
+    const data = await openProjectFile()
+    if (!data) return
+
+    localStorage.setItem('editorsql_schema', data.schema)
+    localStorage.setItem('editorsql_query', data.query)
+    localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
+    if (data.dataDump) {
+      localStorage.setItem('editorsql_restore_data', data.dataDump)
+      localStorage.setItem('editorsql_restore_flag', 'true')
+    } else {
+      localStorage.removeItem('editorsql_restore_flag')
+      localStorage.removeItem('editorsql_restore_data')
+    }
+    localStorage.setItem('editorsql_current_project', data.name)
+    saveSessionProject(data.name, data)
+    clearDirty()
+    location.reload()
   }
 
   const newProject = async () => {
     const name = prompt('Nombre del nuevo proyecto:')
     if (!name || !name.trim()) return
     const trimmed = name.trim()
-    if (localStorage.getItem(PROJECT_PREFIX + trimmed)) {
-      alert('Ya existe un proyecto con ese nombre.')
-      return
+
+    // Save current state to session cache
+    const currentName = localStorage.getItem('editorsql_current_project')
+    if (currentName && !DEFAULT_PROJECTS.includes(currentName)) {
+      const dump = await getDump()
+      const data: ProjectData = {
+        name: currentName,
+        schema: localStorage.getItem('editorsql_schema') ?? '',
+        query: localStorage.getItem('editorsql_query') ?? '',
+        savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
+        dataDump: dump,
+      }
+      saveSessionProject(currentName, data)
     }
 
-    // Save current state as a project first
-    const dump = await getDump()
-    const key = PROJECT_PREFIX + trimmed
-    const data = JSON.stringify({
-      schema: localStorage.getItem('editorsql_schema') ?? '',
-      query: localStorage.getItem('editorsql_query') ?? '',
-      savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
-      dataDump: dump,
-    })
-    localStorage.setItem(key, data)
-
-    // Reset to fresh default state
+    // Reset to default
     localStorage.setItem('editorsql_schema', DEFAULT_SCHEMA)
     localStorage.setItem('editorsql_query', 'SELECT * FROM ')
     localStorage.setItem('editorsql_saved_queries', '[]')
-
     localStorage.setItem('editorsql_current_project', trimmed)
-
-    // Clear any restore flags from previous project loads
     localStorage.removeItem('editorsql_restore_flag')
     localStorage.removeItem('editorsql_restore_data')
-
+    clearDirty()
     location.reload()
-  }
-
-  const loadDefaultProject = async (name: string) => {
-    try {
-      // Verify the file exists with a HEAD request first
-      const head = await fetch(`/projects/${name}.sql`, { method: 'HEAD' })
-      if (!head.ok) throw new Error('Archivo no encontrado')
-      // Set flags — the SQL is too large for localStorage, will be fetched on restore
-      localStorage.setItem('editorsql_load_default', name)
-      localStorage.setItem('editorsql_current_project', name)
-      localStorage.setItem('editorsql_schema', `-- Proyecto: ${name}\n-- Base de datos cargada desde archivo\n-- Escribí tus consultas abajo\nSELECT * FROM `)
-      localStorage.setItem('editorsql_query', 'SELECT * FROM ')
-      localStorage.setItem('editorsql_saved_queries', '[]')
-      // Clear any old restore flags
-      localStorage.removeItem('editorsql_restore_flag')
-      localStorage.removeItem('editorsql_restore_data')
-      setShowProjects(false)
-      location.reload()
-    } catch (e) {
-      alert('Error al cargar proyecto: ' + (e as Error).message)
-    }
-  }
-
-  const deleteProject = (name: string) => {
-    if (DEFAULT_PROJECTS.includes(name)) return
-    localStorage.removeItem(PROJECT_PREFIX + name)
-    setProjects(listProjects())
   }
 
   const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
@@ -215,67 +171,12 @@ export default function Home() {
             Guardar Como
           </button>
 
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setShowProjects(!showProjects)}
-              className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              Abrir Proyecto
-            </button>
-            {showProjects && (
-              <div className="absolute right-0 top-full mt-1 w-64 bg-[#2d2d2d] border border-[#3c3c3c] rounded shadow-lg z-50 max-h-80 overflow-y-auto">
-                {/* Default projects */}
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                  Proyectos de ejemplo
-                </div>
-                {DEFAULT_PROJECTS.map((name) => (
-                  <div
-                    key={name}
-                    className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer"
-                    onClick={() => loadDefaultProject(name)}
-                  >
-                    <svg className="w-3 h-3 text-amber-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
-                    </svg>
-                    <span className="flex-1 truncate capitalize">{name}</span>
-                  </div>
-                ))}
-
-                <div className="border-t border-[#3c3c3c] my-1" />
-
-                {/* User projects */}
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-                  Mis proyectos
-                </div>
-                {projects.length === 0 ? (
-                  <div className="px-3 py-2 text-[11px] text-gray-500">
-                    No hay proyectos guardados
-                  </div>
-                ) : (
-                  projects.map((name) => (
-                    <div
-                      key={name}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer group"
-                      onClick={() => loadProject(name)}
-                    >
-                      <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
-                      </svg>
-                      <span className="flex-1 truncate">{name}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteProject(name) }}
-                        className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 px-1"
-                      >
-                        <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
-                          <path d="M5 4V2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V4h3.5v1H14l-.8 9.5A1.5 1.5 0 0 1 11.7 16H4.3a1.5 1.5 0 0 1-1.5-1.5L2 5h-.5V4H5zm2-1.5V4h2V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
-                        </svg>
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            onClick={openProject}
+            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Abrir Proyecto
+          </button>
 
           <div className="w-px h-4 bg-white/20 mx-1" />
 

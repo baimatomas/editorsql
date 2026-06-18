@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
+import { setDirty } from '@/app/lib/projectFiles'
 
 const LS_QUERY = 'editorsql_query'
 
@@ -30,6 +31,7 @@ export default function QueryEditor() {
   useEffect(() => {
     if (queryTemplate !== null) {
       setSql(queryTemplate)
+      setDirty()
     }
   }, [queryTemplate])
 
@@ -89,7 +91,7 @@ export default function QueryEditor() {
           defaultLanguage="sql"
           theme="vs-dark"
           value={sql}
-          onChange={(val) => setSql(val ?? '')}
+          onChange={(val) => { setSql(val ?? ''); setDirty() }}
           onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },

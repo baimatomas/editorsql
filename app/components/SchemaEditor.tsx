@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB, DEFAULT_SCHEMA } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
+import { setDirty } from '@/app/lib/projectFiles'
 
 const LS_SCHEMA = 'editorsql_schema'
 
@@ -73,7 +74,7 @@ export default function SchemaEditor() {
           defaultLanguage="sql"
           theme="vs-dark"
           value={sql}
-          onChange={(val) => setSql(val ?? '')}
+          onChange={(val) => { setSql(val ?? ''); setDirty() }}
           onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },

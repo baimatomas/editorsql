@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
+import { setDirty } from '@/app/lib/projectFiles'
 
 interface ColumnInfo {
   column_name: string
@@ -353,10 +354,12 @@ export function DBProvider({ children }: { children: ReactNode }) {
       { id: crypto.randomUUID(), name, sql, createdAt: Date.now() },
       ...prev,
     ])
+    setDirty()
   }, [])
 
   const deleteQuery = useCallback((id: string) => {
     setSavedQueries((prev) => prev.filter((q) => q.id !== id))
+    setDirty()
   }, [])
 
   const loadQuery = useCallback((id: string) => {

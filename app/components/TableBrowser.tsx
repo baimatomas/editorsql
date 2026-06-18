@@ -1,22 +1,104 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
+import {
+  getSessionProjects, saveSessionProject, getSessionProjectData,
+  removeSessionProject, promptSaveIfDirty, clearDirty,
+  type ProjectData,
+} from '@/app/lib/projectFiles'
 
 export default function TableBrowser() {
-  const { schemas, ready, savedQueries, loadQuery, deleteQuery } = useDB()
+  const { schemas, ready, savedQueries, loadQuery, deleteQuery, getDump } = useDB()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [projectName, setProjectName] = useState<string | null>(null)
+  const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [sessionProjects, setSessionProjects] = useState<string[]>([])
+  const switcherRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setProjectName(localStorage.getItem('editorsql_current_project'))
+    setSessionProjects(getSessionProjects())
   }, [])
+
+  useEffect(() => {
+    if (!switcherOpen) return
+    const handle = (e: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setSwitcherOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [switcherOpen])
 
   const toggle = (key: string) => {
     const next = new Set(expanded)
     if (next.has(key)) next.delete(key)
     else next.add(key)
     setExpanded(next)
+  }
+
+  const switchToProject = async (name: string) => {
+    if (name === projectName) return
+    const proceed = await promptSaveIfDirty(getDump)
+    if (!proceed) return
+
+    // Save current to session
+    const cur = localStorage.getItem('editorsql_current_project')
+    if (cur && !DEFAULT_PROJECTS.includes(cur)) {
+      const dump = await getDump()
+      const data: ProjectData = {
+        name: cur,
+        schema: localStorage.getItem('editorsql_schema') ?? '',
+        query: localStorage.getItem('editorsql_query') ?? '',
+        savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
+        dataDump: dump,
+      }
+      saveSessionProject(cur, data)
+    }
+
+    // Load selected project
+    if (DEFAULT_PROJECTS.includes(name)) {
+      try {
+        const head = await fetch(`/projects/${name}.sql`, { method: 'HEAD' })
+        if (!head.ok) throw new Error('Archivo no encontrado')
+        localStorage.setItem('editorsql_load_default', name)
+        localStorage.setItem('editorsql_current_project', name)
+        localStorage.setItem('editorsql_schema', `-- Proyecto: ${name}\n-- Base de datos cargada desde archivo\n-- Escribí tus consultas abajo\nSELECT * FROM `)
+        localStorage.setItem('editorsql_query', 'SELECT * FROM ')
+        localStorage.setItem('editorsql_saved_queries', '[]')
+        localStorage.removeItem('editorsql_restore_flag')
+        localStorage.removeItem('editorsql_restore_data')
+      } catch (e) {
+        alert('Error al cargar proyecto: ' + (e as Error).message)
+        return
+      }
+    } else {
+      const data = getSessionProjectData(name)
+      if (!data) return
+      localStorage.setItem('editorsql_schema', data.schema)
+      localStorage.setItem('editorsql_query', data.query)
+      localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
+      if (data.dataDump) {
+        localStorage.setItem('editorsql_restore_data', data.dataDump)
+        localStorage.setItem('editorsql_restore_flag', 'true')
+      } else {
+        localStorage.removeItem('editorsql_restore_flag')
+        localStorage.removeItem('editorsql_restore_data')
+      }
+      localStorage.setItem('editorsql_current_project', name)
+    }
+
+    clearDirty()
+    setSwitcherOpen(false)
+    location.reload()
+  }
+
+  const removeFromSession = (name: string) => {
+    if (DEFAULT_PROJECTS.includes(name)) return
+    removeSessionProject(name)
+    setSessionProjects(getSessionProjects())
   }
 
   if (!ready) {
@@ -31,33 +113,81 @@ export default function TableBrowser() {
 
   return (
     <div className="py-2">
-      {/* Project name */}
-      {projectName && (
-        <div className="px-3 pb-2 mb-2 text-xs text-green-400 font-semibold border-b border-[#3c3c3c] flex items-center gap-1 group">
+      {/* Project switcher dropdown */}
+      <div className="relative px-3 pb-2 mb-2 border-b border-[#3c3c3c]" ref={switcherRef}>
+        <button
+          onClick={() => setSwitcherOpen(!switcherOpen)}
+          className="flex items-center w-full text-xs text-green-400 font-semibold gap-1 hover:bg-[#37373d] px-1 py-1 rounded"
+        >
           <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
           </svg>
-          <span className="flex-1 truncate">{projectName}</span>
-          {!DEFAULT_PROJECTS.includes(projectName) && (
-            <button
-              onClick={() => {
-                if (!confirm(`¿Borrar proyecto "${projectName}"?`)) return
-                localStorage.removeItem('editorsql_project_' + projectName)
-                localStorage.removeItem('editorsql_current_project')
-                location.reload()
-              }}
-              className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-opacity"
-            >
-              <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M5 4V2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V4h3.5v1H14l-.8 9.5A1.5 1.5 0 0 1 11.7 16H4.3a1.5 1.5 0 0 1-1.5-1.5L2 5h-.5V4H5zm2-1.5V4h2V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
-              </svg>
-            </button>
-          )}
-          {DEFAULT_PROJECTS.includes(projectName) && (
-            <span className="text-[9px] text-amber-600/60 font-normal italic">ejemplo</span>
-          )}
-        </div>
-      )}
+          <span className="flex-1 truncate text-left">{projectName || 'Sin proyecto'}</span>
+          <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M4 6l4 4 4-4H4z"/>
+          </svg>
+        </button>
+
+        {switcherOpen && (
+          <div className="absolute left-0 right-3 top-full mt-1 bg-[#2d2d2d] border border-[#3c3c3c] rounded shadow-lg z-50 max-h-72 overflow-y-auto">
+            {/* Default projects */}
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Proyectos de ejemplo
+            </div>
+            {DEFAULT_PROJECTS.map((name) => (
+              <div
+                key={name}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer"
+                onClick={() => switchToProject(name)}
+              >
+                <svg className="w-3 h-3 text-amber-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
+                </svg>
+                <span className="flex-1 truncate capitalize">{name}</span>
+                {name === projectName && (
+                  <span className="text-[10px] text-green-500">✓</span>
+                )}
+              </div>
+            ))}
+
+            <div className="border-t border-[#3c3c3c] my-1" />
+
+            {/* User session projects */}
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+              Mis proyectos
+            </div>
+            {sessionProjects.length === 0 ? (
+              <div className="px-3 py-2 text-[11px] text-gray-500">
+                No hay proyectos en la sesión
+              </div>
+            ) : (
+              sessionProjects.map((name) => (
+                <div
+                  key={name}
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer group"
+                  onClick={() => switchToProject(name)}
+                >
+                  <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
+                  </svg>
+                  <span className="flex-1 truncate">{name}</span>
+                  {name === projectName && (
+                    <span className="text-[10px] text-green-500">✓</span>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeFromSession(name) }}
+                    className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 px-1"
+                  >
+                    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M5 4V2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V4h3.5v1H14l-.8 9.5A1.5 1.5 0 0 1 11.7 16H4.3a1.5 1.5 0 0 1-1.5-1.5L2 5h-.5V4H5zm2-1.5V4h2V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
+                    </svg>
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
 
       {!hasAnyObj ? (
         <div className="px-3 text-xs text-gray-500">
