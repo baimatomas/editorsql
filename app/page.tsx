@@ -17,7 +17,7 @@ export default function Home() {
         </header>
 
         <Group orientation="horizontal" className="flex-1">
-          <Panel defaultSize={22} minSize={10} className="bg-[#252526]" style={{ flex: '25000 1 0px' }}>
+          <Panel defaultSize={40} minSize={10} className="bg-[#252526]">
             <TableBrowser />
           </Panel>
           <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
