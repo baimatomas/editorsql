@@ -1,11 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDB } from '@/app/providers'
 
 export default function TableBrowser() {
   const { tables, ready, savedQueries, loadQuery, deleteQuery } = useDB()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  const [projectName, setProjectName] = useState<string | null>(null)
+
+  useEffect(() => {
+    setProjectName(localStorage.getItem('editorsql_current_project'))
+  }, [])
 
   const toggle = (name: string) => {
     const next = new Set(expanded)
@@ -24,6 +29,16 @@ export default function TableBrowser() {
 
   return (
     <div className="py-2">
+      {/* Project name */}
+      {projectName && (
+        <div className="px-3 pb-2 mb-2 text-xs text-green-400 font-semibold border-b border-[#3c3c3c] flex items-center gap-1">
+          <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
+          </svg>
+          {projectName}
+        </div>
+      )}
+
       {/* Tables */}
       {tables.length === 0 ? (
         <div className="px-3 text-xs text-gray-500">

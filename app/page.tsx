@@ -60,7 +60,25 @@ export default function Home() {
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
 
   const saveProject = async () => {
-    const name = prompt('Nombre del proyecto:')
+    let name = localStorage.getItem('editorsql_current_project')
+    if (!name) {
+      name = prompt('Nombre del proyecto:')
+      if (!name || !name.trim()) return
+      localStorage.setItem('editorsql_current_project', name.trim())
+    }
+    const key = PROJECT_PREFIX + name.trim()
+    const dump = await getDump()
+    const data = JSON.stringify({
+      schema: localStorage.getItem('editorsql_schema') ?? '',
+      query: localStorage.getItem('editorsql_query') ?? '',
+      savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
+      dataDump: dump,
+    })
+    localStorage.setItem(key, data)
+  }
+
+  const saveAsProject = async () => {
+    const name = prompt('Guardar como:')
     if (!name || !name.trim()) return
     const key = PROJECT_PREFIX + name.trim()
     const dump = await getDump()
@@ -71,6 +89,7 @@ export default function Home() {
       dataDump: dump,
     })
     localStorage.setItem(key, data)
+    localStorage.setItem('editorsql_current_project', name.trim())
   }
 
   const loadProject = (name: string) => {
@@ -86,6 +105,7 @@ export default function Home() {
         localStorage.setItem('editorsql_restore_data', data.dataDump)
         localStorage.setItem('editorsql_restore_flag', 'true')
       }
+      localStorage.setItem('editorsql_current_project', name)
       setShowProjects(false)
       location.reload()
     } catch { /* ignore */ }
@@ -111,6 +131,8 @@ export default function Home() {
     localStorage.setItem('editorsql_query', 'SELECT * FROM ')
     localStorage.setItem('editorsql_saved_queries', '[]')
 
+    localStorage.setItem('editorsql_current_project', name.trim())
+
     // Clear any restore flags from previous project loads
     localStorage.removeItem('editorsql_restore_flag')
     localStorage.removeItem('editorsql_restore_data')
@@ -129,7 +151,7 @@ export default function Home() {
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
         <header className="bg-[#007acc] text-white px-4 py-1 text-sm font-semibold flex items-center gap-2 flex-shrink-0">
           <span className="mr-2">EditorSQL</span>
-          <span className="text-[11px] font-normal opacity-70 mr-auto">— Práctica PostgreSQL</span>
+          <span className="text-[11px] font-normal opacity-70 mr-auto">— FCECON — Asignatura Base de Datos</span>
 
           <button
             onClick={newProject}
@@ -143,6 +165,13 @@ export default function Home() {
             className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
           >
             Guardar Proyecto
+          </button>
+
+          <button
+            onClick={saveAsProject}
+            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Guardar Como
           </button>
 
           <div className="relative" ref={dropdownRef}>
