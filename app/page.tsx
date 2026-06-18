@@ -17,7 +17,7 @@ export default function Home() {
         </header>
 
         <div className="flex flex-1 overflow-hidden">
-          <div className="bg-[#252526] overflow-y-auto" style={{ flex: '160 1 0px' }}>
+          <div className="bg-[#252526] overflow-y-auto" style={{ flex: '30 1 0px' }}>
             <TableBrowser />
           </div>
           <div className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize flex-shrink-0" />
