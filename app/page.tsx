@@ -1,5 +1,6 @@
 'use client'
 
+import { Group, Panel, Separator } from 'react-resizable-panels'
 import { DBProvider } from '@/app/providers'
 import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
@@ -20,19 +21,23 @@ export default function Home() {
             <TableBrowser />
           </aside>
 
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex flex-1 min-h-0">
-              <div className="flex-1 w-1/2 border-r border-[#3c3c3c]">
-                <SchemaEditor />
-              </div>
-              <div className="flex-1 w-1/2">
-                <QueryEditor />
-              </div>
-            </div>
-            <div className="h-[200px] flex-shrink-0 border-t border-[#3c3c3c]">
+          <Group orientation="vertical" className="flex-1">
+            <Panel defaultSize={65} minSize={20}>
+              <Group orientation="horizontal">
+                <Panel defaultSize={50} minSize={15}>
+                  <SchemaEditor />
+                </Panel>
+                <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+                <Panel defaultSize={50} minSize={15}>
+                  <QueryEditor />
+                </Panel>
+              </Group>
+            </Panel>
+            <Separator className="h-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-row-resize" />
+            <Panel defaultSize={35} minSize={10}>
               <ResultTable />
-            </div>
-          </div>
+            </Panel>
+          </Group>
         </div>
       </div>
     </DBProvider>

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import Editor from '@monaco-editor/react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB } from '@/app/providers'
 
 export default function SchemaEditor() {
@@ -53,11 +53,23 @@ INSERT INTO cursos (titulo, categoria, precio, duracion_horas) VALUES
 ('Redes Neuronales',              'Machine Learning', 9500.00, 90),
 ('Visualizaci\u00f3n con Tableau',     'Visualizaci\u00f3n',    5000.00, 40),
 ('SQL desde cero para datos',     'Bases de Datos',   4500.00, 35);`)
+  const sqlRef = useRef(sql)
   const { runSchema, schemaError, ready } = useDB()
+  const runRef = useRef(runSchema)
 
-  const handleRun = () => {
-    runSchema(sql)
-  }
+  useEffect(() => { sqlRef.current = sql }, [sql])
+  useEffect(() => { runRef.current = runSchema }, [runSchema])
+
+  const handleEditorMount: OnMount = useCallback((_editor, monaco) => {
+    _editor.addAction({
+      id: 'run-schema',
+      label: 'Run Schema',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+      run: () => { runRef.current(sqlRef.current) },
+    })
+  }, [])
+
+  const handleRun = () => { runRef.current(sqlRef.current) }
 
   return (
     <div className="flex flex-col h-full">
@@ -80,6 +92,7 @@ INSERT INTO cursos (titulo, categoria, precio, duracion_horas) VALUES
           theme="vs-dark"
           value={sql}
           onChange={(val) => setSql(val ?? '')}
+          onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },
             fontSize: 12,
