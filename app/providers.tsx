@@ -10,9 +10,21 @@ interface ColumnInfo {
   column_default: string | null
 }
 
-interface TableInfo {
-  table_name: string
+interface ObjectInfo {
+  name: string
   columns: ColumnInfo[]
+}
+
+interface FuncInfo {
+  name: string
+  return_type: string | null
+}
+
+interface SchemaInfo {
+  schema_name: string
+  tables: ObjectInfo[]
+  views: ObjectInfo[]
+  functions: FuncInfo[]
 }
 
 interface SavedQuery {
@@ -24,7 +36,7 @@ interface SavedQuery {
 
 interface DBContextType {
   ready: boolean
-  tables: TableInfo[]
+  schemas: SchemaInfo[]
   schemaError: string | null
   queryError: string | null
   queryResult: unknown[] | null
@@ -101,7 +113,7 @@ export function useDB() {
 export function DBProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<PGlite | null>(null)
   const [ready, setReady] = useState(false)
-  const [tables, setTables] = useState<TableInfo[]>([])
+  const [schemas, setSchemas] = useState<SchemaInfo[]>([])
   const [schemaError, setSchemaError] = useState<string | null>(null)
   const [queryResult, setQueryResult] = useState<unknown[] | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
@@ -136,35 +148,72 @@ export function DBProvider({ children }: { children: ReactNode }) {
 
   const refreshTables = useCallback(async (pglite: PGlite) => {
     try {
-      const result = await pglite.query(`
-        SELECT table_name, column_name, data_type, is_nullable, column_default
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-        ORDER BY table_name, ordinal_position
+      // Get tables and views with column info and type
+      const objectsResult = await pglite.query(`
+        SELECT c.table_schema, c.table_name, c.column_name, c.data_type,
+               c.is_nullable, c.column_default, t.table_type
+        FROM information_schema.columns c
+        JOIN information_schema.tables t
+          ON c.table_schema = t.table_schema AND c.table_name = t.table_name
+        WHERE c.table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+        ORDER BY c.table_schema, t.table_type DESC, c.table_name, c.ordinal_position
       `)
-      const rows = result.rows as Array<{
+      const objRows = objectsResult.rows as Array<{
+        table_schema: string
         table_name: string
         column_name: string
         data_type: string
         is_nullable: string
         column_default: string | null
+        table_type: string
       }>
-      const map = new Map<string, ColumnInfo[]>()
-      for (const row of rows) {
-        if (!map.has(row.table_name)) map.set(row.table_name, [])
-        map.get(row.table_name)!.push({
+
+      // Group by schema
+      const schemaMap = new Map<string, {
+        tables: Map<string, ColumnInfo[]>
+        views: Map<string, ColumnInfo[]>
+      }>()
+
+      for (const row of objRows) {
+        if (!schemaMap.has(row.table_schema)) {
+          schemaMap.set(row.table_schema, { tables: new Map(), views: new Map() })
+        }
+        const s = schemaMap.get(row.table_schema)!
+        const target = row.table_type === 'VIEW' ? s.views : s.tables
+        if (!target.has(row.table_name)) target.set(row.table_name, [])
+        target.get(row.table_name)!.push({
           column_name: row.column_name,
           data_type: row.data_type,
           is_nullable: row.is_nullable,
           column_default: row.column_default,
         })
       }
-      const tbls: TableInfo[] = Array.from(map.entries()).map(
-        ([table_name, columns]) => ({ table_name, columns })
-      )
-      setTables(tbls)
+
+      // Get functions
+      let funcRows: Array<{ specific_schema: string; routine_name: string; data_type: string | null }> = []
+      try {
+        const funcResult = await pglite.query(`
+          SELECT specific_schema, routine_name, data_type
+          FROM information_schema.routines
+          WHERE specific_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+          ORDER BY specific_schema, routine_name
+        `)
+        funcRows = funcResult.rows as typeof funcRows
+      } catch { /* routines table might not be available in some PGlite builds */ }
+
+      // Build schema array
+      const result: SchemaInfo[] = Array.from(schemaMap.entries()).map(([schema_name, data]) => ({
+        schema_name,
+        tables: Array.from(data.tables.entries()).map(([name, columns]) => ({ name, columns })),
+        views: Array.from(data.views.entries()).map(([name, columns]) => ({ name, columns })),
+        functions: funcRows
+          .filter(r => r.specific_schema === schema_name)
+          .map(r => ({ name: r.routine_name, return_type: r.data_type })),
+      }))
+
+      setSchemas(result)
     } catch {
-      setTables([])
+      setSchemas([])
     }
   }, [])
 
@@ -355,7 +404,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   return (
     <DBContext.Provider
       value={{
-        ready, tables, schemaError, queryError, queryResult, loading,
+        ready, schemas, schemaError, queryError, queryResult, loading,
         runSchema, runQuery,
         savedQueries, saveQuery, deleteQuery,
         queryTemplate, loadQuery,

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useDB } from '@/app/providers'
 
 export default function TableBrowser() {
-  const { tables, ready, savedQueries, loadQuery, deleteQuery } = useDB()
+  const { schemas, ready, savedQueries, loadQuery, deleteQuery } = useDB()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [projectName, setProjectName] = useState<string | null>(null)
 
@@ -12,10 +12,10 @@ export default function TableBrowser() {
     setProjectName(localStorage.getItem('editorsql_current_project'))
   }, [])
 
-  const toggle = (name: string) => {
+  const toggle = (key: string) => {
     const next = new Set(expanded)
-    if (next.has(name)) next.delete(name)
-    else next.add(name)
+    if (next.has(key)) next.delete(key)
+    else next.add(key)
     setExpanded(next)
   }
 
@@ -26,6 +26,8 @@ export default function TableBrowser() {
       </div>
     )
   }
+
+  const hasAnyObj = schemas.some(s => s.tables.length > 0 || s.views.length > 0 || s.functions.length > 0)
 
   return (
     <div className="py-2">
@@ -52,53 +54,144 @@ export default function TableBrowser() {
         </div>
       )}
 
-      {/* Tables */}
-      {tables.length === 0 ? (
+      {!hasAnyObj ? (
         <div className="px-3 text-xs text-gray-500">
-          No hay tablas aún.<br />
+          No hay objetos aún.<br />
           Ejecutá un schema SQL arriba.
         </div>
       ) : (
-        <div className="mb-2">
-          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 mb-1">
-            Tablas ({tables.length})
-          </div>
-          {tables.map((t) => (
-            <div key={t.table_name}>
+        schemas.map((s) => {
+          const schemaKey = `schema:${s.schema_name}`
+          const isSchemaOpen = expanded.has(schemaKey)
+          const totalTables = s.tables.length
+          const totalViews = s.views.length
+          const totalFuncs = s.functions.length
+          if (totalTables === 0 && totalViews === 0 && totalFuncs === 0) return null
+
+          return (
+            <div key={s.schema_name} className="mb-1">
+              {/* Schema header */}
               <button
-                onClick={() => toggle(t.table_name)}
-                className="flex items-center w-full text-left px-3 py-1 text-sm text-gray-300 hover:bg-[#37373d]"
+                onClick={() => toggle(schemaKey)}
+                className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-[#37373d] font-medium"
               >
-                <span className="text-[10px] mr-1.5 text-gray-500 w-2">
-                  {expanded.has(t.table_name) ? '▼' : '▶'}
+                <span className="text-[10px] mr-1.5 w-2 text-gray-500">
+                  {isSchemaOpen ? '▼' : '▶'}
                 </span>
-                <span className="text-blue-400">{t.table_name}</span>
+                <span className="text-purple-400">Schema: {s.schema_name}</span>
               </button>
-              {expanded.has(t.table_name) && (
-                <div className="ml-4 border-l border-[#3c3c3c] ml-5 pl-2">
-                  {t.columns.map((c) => (
-                    <div
-                      key={c.column_name}
-                      className="flex items-center gap-1.5 px-2 py-0.5 text-xs"
-                    >
-                      <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                        <rect x="2" y="2" width="12" height="12" rx="1" />
-                      </svg>
-                      <span className="text-gray-300">{c.column_name}</span>
-                      <span className="text-gray-600">{c.data_type}</span>
-                      {c.is_nullable === 'NO' && (
-                        <span className="text-[10px] text-yellow-700 font-medium">NN</span>
-                      )}
+
+              {isSchemaOpen && (
+                <div className="ml-3">
+                  {/* Tables */}
+                  {totalTables > 0 && (
+                    <div className="mb-1">
+                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
+                        Tablas ({totalTables})
+                      </div>
+                      {s.tables.map((t) => {
+                        const tKey = `${schemaKey}:table:${t.name}`
+                        return (
+                          <div key={t.name}>
+                            <button
+                              onClick={() => toggle(tKey)}
+                              className="flex items-center w-full text-left px-3 py-1 text-sm text-gray-300 hover:bg-[#37373d]"
+                            >
+                              <span className="text-[10px] mr-1.5 text-gray-500 w-2">
+                                {expanded.has(tKey) ? '▼' : '▶'}
+                              </span>
+                              <span className="text-blue-400">{t.name}</span>
+                            </button>
+                            {expanded.has(tKey) && (
+                              <div className="ml-4 border-l border-[#3c3c3c] ml-5 pl-2">
+                                {t.columns.map((c) => (
+                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-xs">
+                                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                      <rect x="2" y="2" width="12" height="12" rx="1" />
+                                    </svg>
+                                    <span className="text-gray-300">{c.column_name}</span>
+                                    <span className="text-gray-600">{c.data_type}</span>
+                                    {c.is_nullable === 'NO' && (
+                                      <span className="text-[10px] text-yellow-700 font-medium">NN</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
+                  )}
+
+                  {/* Views */}
+                  {totalViews > 0 && (
+                    <div className="mb-1">
+                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
+                        Vistas ({totalViews})
+                      </div>
+                      {s.views.map((v) => {
+                        const vKey = `${schemaKey}:view:${v.name}`
+                        return (
+                          <div key={v.name}>
+                            <button
+                              onClick={() => toggle(vKey)}
+                              className="flex items-center w-full text-left px-3 py-1 text-sm text-gray-300 hover:bg-[#37373d]"
+                            >
+                              <span className="text-[10px] mr-1.5 text-gray-500 w-2">
+                                {expanded.has(vKey) ? '▼' : '▶'}
+                              </span>
+                              <span className="text-teal-400">{v.name}</span>
+                            </button>
+                            {expanded.has(vKey) && (
+                              <div className="ml-4 border-l border-[#3c3c3c] ml-5 pl-2">
+                                {v.columns.map((c) => (
+                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-xs">
+                                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                      <rect x="2" y="2" width="12" height="12" rx="1" />
+                                    </svg>
+                                    <span className="text-gray-300">{c.column_name}</span>
+                                    <span className="text-gray-600">{c.data_type}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Functions */}
+                  {totalFuncs > 0 && (
+                    <div>
+                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
+                        Funciones ({totalFuncs})
+                      </div>
+                      {s.functions.map((f) => (
+                        <div
+                          key={f.name}
+                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-gray-300 hover:bg-[#37373d]"
+                        >
+                          <svg className="w-3 h-3 text-orange-400 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M3 2h10v2H3V2zm0 5h10v2H3V7zm0 5h7v2H3v-2z"/>
+                          </svg>
+                          <span className="text-orange-300">{f.name}()</span>
+                          {f.return_type && (
+                            <span className="text-gray-600">→ {f.return_type}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          ))}
-        </div>
+          )
+        })
       )}
 
-      <div className="border-t border-[#3c3c3c] mb-2" />
+      <div className="border-t border-[#3c3c3c] mb-2 mt-2" />
 
       {/* Saved Queries */}
       <div>
