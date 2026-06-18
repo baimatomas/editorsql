@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { useDB } from '@/app/providers'
+import { useDB, DEFAULT_SCHEMA } from '@/app/providers'
 import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
@@ -91,6 +91,33 @@ export default function Home() {
     } catch { /* ignore */ }
   }
 
+  const newProject = async () => {
+    const name = prompt('Nombre del nuevo proyecto:')
+    if (!name || !name.trim()) return
+
+    // Save current state as a project first
+    const dump = await getDump()
+    const key = PROJECT_PREFIX + name.trim()
+    const data = JSON.stringify({
+      schema: localStorage.getItem('editorsql_schema') ?? '',
+      query: localStorage.getItem('editorsql_query') ?? '',
+      savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
+      dataDump: dump,
+    })
+    localStorage.setItem(key, data)
+
+    // Reset to fresh default state
+    localStorage.setItem('editorsql_schema', DEFAULT_SCHEMA)
+    localStorage.setItem('editorsql_query', 'SELECT * FROM ')
+    localStorage.setItem('editorsql_saved_queries', '[]')
+
+    // Clear any restore flags from previous project loads
+    localStorage.removeItem('editorsql_restore_flag')
+    localStorage.removeItem('editorsql_restore_data')
+
+    location.reload()
+  }
+
   const deleteProject = (name: string) => {
     localStorage.removeItem(PROJECT_PREFIX + name)
     setProjects(listProjects())
@@ -103,6 +130,13 @@ export default function Home() {
         <header className="bg-[#007acc] text-white px-4 py-1 text-sm font-semibold flex items-center gap-2 flex-shrink-0">
           <span className="mr-2">EditorSQL</span>
           <span className="text-[11px] font-normal opacity-70 mr-auto">— Práctica PostgreSQL</span>
+
+          <button
+            onClick={newProject}
+            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            Nuevo Proyecto
+          </button>
 
           <button
             onClick={saveProject}
