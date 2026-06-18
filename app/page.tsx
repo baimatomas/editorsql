@@ -149,7 +149,7 @@ export default function Home() {
 
     // Reset to default
     localStorage.setItem('editorsql_schema', DEFAULT_SCHEMA)
-    localStorage.setItem('editorsql_query', 'SELECT * FROM ')
+    localStorage.setItem('editorsql_query', '-- Solo se permiten consultas SELECT en este panel\nSELECT ')
     localStorage.setItem('editorsql_saved_queries', '[]')
     localStorage.setItem('editorsql_current_project', trimmed)
     localStorage.removeItem('editorsql_restore_flag')
