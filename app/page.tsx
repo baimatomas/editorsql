@@ -163,8 +163,8 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
         <header className="bg-[#007acc] text-white flex-shrink-0">
-          <div className="flex items-center px-4 py-1 gap-2">
-            <div className="w-[18%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
+          <div className="flex items-center pl-1.5 pr-4 py-1 gap-2">
+            <div className="w-[16%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
               <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain" />
             </div>
             <span className="text-sm font-semibold text-nowrap">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
@@ -221,7 +221,7 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel id="sidebar" defaultSize="18%" minSize="6%" className="bg-[#252526]">
+                <Panel id="sidebar" defaultSize="16%" minSize="6%" className="bg-[#252526]">
                   <TableBrowser />
                 </Panel>
                 <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
