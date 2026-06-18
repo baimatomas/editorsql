@@ -163,9 +163,8 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
         <header className="bg-[#007acc] text-white px-4 py-1 text-sm font-semibold flex items-center gap-2 flex-shrink-0">
-          <img src="/logo-unr-blanco.png" alt="UNR" className="h-8 w-auto mr-1" />
-          <span className="mr-1">EditorSQL</span>
-          <span className="text-[11px] font-normal opacity-70 mr-auto">— FCECON — Asignatura Base de Datos</span>
+          <img src="/logo-unr-blanco.png" alt="UNR" className="w-[110px] h-auto mr-1" />
+          <span className="mr-auto text-sm font-semibold">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
 
           <button
             onClick={newProject}
