@@ -319,23 +319,33 @@ export function DBProvider({ children }: { children: ReactNode }) {
     if (!db || !ready || restoreAttempted) return
     setRestoreAttempted(true)
 
-    const flag = localStorage.getItem('editorsql_restore_flag')
-    if (flag !== 'true') return
+    const dumpFlag = localStorage.getItem('editorsql_restore_flag')
+    const defaultFlag = localStorage.getItem('editorsql_load_default')
+
+    if (dumpFlag !== 'true' && !defaultFlag) return
 
     const restore = async () => {
       try {
-        // Execute saved data dump (DDL + INSERTs)
-        const dump = localStorage.getItem('editorsql_restore_data')
-        if (dump && dump.trim()) {
-          await db.exec(dump)
+        if (dumpFlag === 'true') {
+          const dump = localStorage.getItem('editorsql_restore_data')
+          if (dump && dump.trim()) {
+            await db.exec(dump)
+          }
+          localStorage.removeItem('editorsql_restore_flag')
+          localStorage.removeItem('editorsql_restore_data')
+        } else if (defaultFlag) {
+          const res = await fetch(`/projects/${defaultFlag}.sql`)
+          if (!res.ok) throw new Error(`No se pudo descargar ${defaultFlag}.sql`)
+          const sql = await res.text()
+          await db.exec(sql)
+          localStorage.removeItem('editorsql_load_default')
         }
         await refreshTables(db)
-        localStorage.removeItem('editorsql_restore_flag')
-        localStorage.removeItem('editorsql_restore_data')
       } catch (e) {
         setSchemaError('Error al restaurar proyecto: ' + (e as Error).message)
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
+        localStorage.removeItem('editorsql_load_default')
       }
     }
 

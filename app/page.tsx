@@ -143,14 +143,18 @@ export default function Home() {
 
   const loadDefaultProject = async (name: string) => {
     try {
-      const res = await fetch(`/projects/${name}.sql`)
-      const sql = await res.text()
-      localStorage.setItem('editorsql_schema', sql)
-      localStorage.setItem('editorsql_restore_data', sql)
-      localStorage.setItem('editorsql_restore_flag', 'true')
+      // Verify the file exists with a HEAD request first
+      const head = await fetch(`/projects/${name}.sql`, { method: 'HEAD' })
+      if (!head.ok) throw new Error('Archivo no encontrado')
+      // Set flags — the SQL is too large for localStorage, will be fetched on restore
+      localStorage.setItem('editorsql_load_default', name)
       localStorage.setItem('editorsql_current_project', name)
+      localStorage.setItem('editorsql_schema', `-- Proyecto: ${name}\n-- Base de datos cargada desde archivo\n-- Escribí tus consultas abajo\nSELECT * FROM `)
       localStorage.setItem('editorsql_query', 'SELECT * FROM ')
       localStorage.setItem('editorsql_saved_queries', '[]')
+      // Clear any old restore flags
+      localStorage.removeItem('editorsql_restore_flag')
+      localStorage.removeItem('editorsql_restore_data')
       setShowProjects(false)
       location.reload()
     } catch (e) {
