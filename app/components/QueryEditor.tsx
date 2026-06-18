@@ -20,7 +20,7 @@ export default function QueryEditor() {
   }, [])
 
   useEffect(() => { sqlRef.current = sql }, [sql])
-  useEffect(() => { if (loadedRef.current) localStorage.setItem(LS_QUERY, sql) }, [sql])
+  useEffect(() => { if (loadedRef.current) try { localStorage.setItem(LS_QUERY, sql) } catch {} }, [sql])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
   useEffect(() => {

@@ -21,7 +21,13 @@ export default function SchemaEditor() {
 
   useEffect(() => { sqlRef.current = sql }, [sql])
   useEffect(() => { runRef.current = runSchema }, [runSchema])
-  useEffect(() => { if (loadedRef.current) localStorage.setItem(LS_SCHEMA, sql) }, [sql])
+  useEffect(() => {
+    if (!loadedRef.current) return
+    const timer = setTimeout(() => {
+      try { localStorage.setItem(LS_SCHEMA, sql) } catch {}
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [sql])
 
   const handleEditorMount: OnMount = useCallback((_editor, monaco) => {
     _editor.addAction({

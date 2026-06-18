@@ -31,11 +31,24 @@ export default function TableBrowser() {
     <div className="py-2">
       {/* Project name */}
       {projectName && (
-        <div className="px-3 pb-2 mb-2 text-xs text-green-400 font-semibold border-b border-[#3c3c3c] flex items-center gap-1">
-          <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+        <div className="px-3 pb-2 mb-2 text-xs text-green-400 font-semibold border-b border-[#3c3c3c] flex items-center gap-1 group">
+          <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
           </svg>
-          {projectName}
+          <span className="flex-1 truncate">{projectName}</span>
+          <button
+            onClick={() => {
+              if (!confirm(`¿Borrar proyecto "${projectName}"?`)) return
+              localStorage.removeItem('editorsql_project_' + projectName)
+              localStorage.removeItem('editorsql_current_project')
+              location.reload()
+            }}
+            className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-opacity"
+          >
+            <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M5 4V2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V4h3.5v1H14l-.8 9.5A1.5 1.5 0 0 1 11.7 16H4.3a1.5 1.5 0 0 1-1.5-1.5L2 5h-.5V4H5zm2-1.5V4h2V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
+            </svg>
+          </button>
         </div>
       )}
 

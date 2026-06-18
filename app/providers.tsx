@@ -118,7 +118,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem(LS_SAVED, JSON.stringify(savedQueries))
+    try { localStorage.setItem(LS_SAVED, JSON.stringify(savedQueries)) } catch {}
   }, [savedQueries])
 
   useEffect(() => {
