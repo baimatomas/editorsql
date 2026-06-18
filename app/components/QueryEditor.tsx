@@ -9,16 +9,18 @@ const LS_QUERY = 'editorsql_query'
 export default function QueryEditor() {
   const [sql, setSql] = useState('SELECT * FROM ')
   const sqlRef = useRef(sql)
+  const loadedRef = useRef(false)
   const { runQuery, queryError, ready, loading, queryTemplate, saveQuery } = useDB()
   const runRef = useRef(runQuery)
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_QUERY)
     if (stored !== null) setSql(stored)
+    loadedRef.current = true
   }, [])
 
   useEffect(() => { sqlRef.current = sql }, [sql])
-  useEffect(() => { localStorage.setItem(LS_QUERY, sql) }, [sql])
+  useEffect(() => { if (loadedRef.current) localStorage.setItem(LS_QUERY, sql) }, [sql])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
   useEffect(() => {

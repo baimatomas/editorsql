@@ -58,17 +58,19 @@ const LS_SCHEMA = 'editorsql_schema'
 export default function SchemaEditor() {
   const [sql, setSql] = useState(DEFAULT_SCHEMA)
   const sqlRef = useRef(sql)
+  const loadedRef = useRef(false)
   const { runSchema, schemaError, ready } = useDB()
   const runRef = useRef(runSchema)
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_SCHEMA)
     if (stored !== null) setSql(stored)
+    loadedRef.current = true
   }, [])
 
   useEffect(() => { sqlRef.current = sql }, [sql])
   useEffect(() => { runRef.current = runSchema }, [runSchema])
-  useEffect(() => { localStorage.setItem(LS_SCHEMA, sql) }, [sql])
+  useEffect(() => { if (loadedRef.current) localStorage.setItem(LS_SCHEMA, sql) }, [sql])
 
   const handleEditorMount: OnMount = useCallback((_editor, monaco) => {
     _editor.addAction({
