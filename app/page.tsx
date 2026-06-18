@@ -61,24 +61,24 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel defaultSize={18} minSize={6} className="bg-[#252526]">
+                <Panel id="sidebar" defaultSize="18%" minSize="6%" className="bg-[#252526]">
                   <TableBrowser />
                 </Panel>
                 <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
               </>
             )}
 
-            <Panel className="flex flex-col">
+            <Panel id="main" className="flex flex-col">
               {(visible.schema || visible.query) && (
                 <Group orientation="vertical" className="flex-1">
-                  <Panel defaultSize={65} minSize={10}>
+                  <Panel id="editors" defaultSize="65%" minSize="10%">
                     {visible.schema && visible.query ? (
                       <Group orientation="horizontal">
-                        <Panel defaultSize={50} minSize={10}>
+                        <Panel id="schema" defaultSize="50%" minSize="10%">
                           <SchemaEditor />
                         </Panel>
                         <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
-                        <Panel defaultSize={50} minSize={10}>
+                        <Panel id="query" defaultSize="50%" minSize="10%">
                           <QueryEditor />
                         </Panel>
                       </Group>
@@ -91,7 +91,7 @@ export default function Home() {
                   {visible.results && (
                     <>
                       <Separator className="h-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-row-resize" />
-                      <Panel defaultSize={35} minSize={10}>
+                      <Panel id="results" defaultSize="35%" minSize="10%">
                         <ResultTable />
                       </Panel>
                     </>
