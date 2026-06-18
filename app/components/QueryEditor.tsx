@@ -1,26 +1,35 @@
 'use client'
 
-import { useState } from 'react'
-import Editor from '@monaco-editor/react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB } from '@/app/providers'
 
 export default function QueryEditor() {
   const [sql, setSql] = useState('SELECT * FROM ')
+  const sqlRef = useRef(sql)
   const { runQuery, queryError, ready, loading } = useDB()
+  const runRef = useRef(runQuery)
+
+  useEffect(() => { sqlRef.current = sql }, [sql])
+  useEffect(() => { runRef.current = runQuery }, [runQuery])
+
+  const handleEditorMount: OnMount = useCallback((editor) => {
+    editor.addAction({
+      id: 'run-query',
+      label: 'Run Query',
+      keybindings: [2048 | 13], // Ctrl+Enter
+      run: () => {
+        runRef.current(sqlRef.current)
+      },
+    })
+  }, [])
 
   const handleRun = () => {
-    runQuery(sql)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault()
-      handleRun()
-    }
+    runRef.current(sqlRef.current)
   }
 
   return (
-    <div className="flex flex-col h-full" onKeyDown={handleKeyDown}>
+    <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-3 py-1.5 bg-[#252526] border-b border-[#3c3c3c] flex-shrink-0">
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
           Query SQL
@@ -40,6 +49,7 @@ export default function QueryEditor() {
           theme="vs-dark"
           value={sql}
           onChange={(val) => setSql(val ?? '')}
+          onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },
             fontSize: 12,

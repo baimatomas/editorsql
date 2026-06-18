@@ -35,10 +35,32 @@ export default function ResultTable() {
 
   const columns = Object.keys(queryResult[0] as Record<string, unknown>)
 
+  const exportCSV = () => {
+    const header = columns.map((c) => `"${c}"`).join(',')
+    const rows = (queryResult as Record<string, unknown>[]).map((row) =>
+      columns.map((col) => {
+        const val = row[col]
+        if (val === null) return ''
+        return `"${String(val).replace(/"/g, '""')}"`
+      }).join(',')
+    )
+    const csv = [header, ...rows].join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'resultados.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1 bg-[#252526] border-b border-[#3c3c3c] flex-shrink-0">
-        Resultados
+      <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1 bg-[#252526] border-b border-[#3c3c3c] flex-shrink-0">
+        <span>Resultados</span>
+        <button onClick={exportCSV} className="text-[10px] text-blue-400 hover:text-blue-300 font-medium normal-case tracking-normal">
+          Exportar CSV
+        </button>
       </div>
       <div className="flex-1 overflow-auto">
         <table className="w-full text-xs border-collapse">
