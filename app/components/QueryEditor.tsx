@@ -38,7 +38,7 @@ export default function QueryEditor() {
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editor.addAction({
       id: 'run-query',
-      label: 'Run Query',
+      label: 'Ejecutar Query',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => { runRef.current(sqlRef.current) },
     })
@@ -88,14 +88,14 @@ export default function QueryEditor() {
             disabled={!ready || !sql.trim()}
             className="px-2 py-0.5 text-xs text-gray-400 hover:text-white border border-[#3c3c3c] hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed rounded font-medium"
           >
-            Save
+Guardar query
           </button>
           <button
             onClick={handleRun}
             disabled={!ready || !sql.trim() || loading}
             className="px-3 py-0.5 text-xs bg-[#0e639c] hover:bg-[#1177bb] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-medium"
           >
-            {loading ? 'Ejecutando...' : 'Run Query'}
+            {loading ? 'Ejecutando...' : 'Ejecutar Query'}
           </button>
         </div>
       </div>

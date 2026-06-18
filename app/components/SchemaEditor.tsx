@@ -65,7 +65,7 @@ export default function SchemaEditor() {
           disabled={!ready || !sql.trim()}
           className="px-3 py-0.5 text-xs bg-[#0e639c] hover:bg-[#1177bb] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-medium"
         >
-          Run Schema
+Ejecutar Schema
         </button>
       </div>
       <div className="flex-1 min-h-0">

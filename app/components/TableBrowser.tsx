@@ -338,7 +338,7 @@ export default function TableBrowser() {
           <span className="text-[10px] mr-1.5 w-2">
             {expanded.has('saved') ? '▼' : '▶'}
           </span>
-          <span className="text-orange-400 font-medium">Saved Queries</span>
+          <span className="text-orange-400 font-medium">Queries guardadas</span>
           {savedQueries.length > 0 && (
             <span className="ml-1 text-gray-600">({savedQueries.length})</span>
           )}
