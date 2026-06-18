@@ -55,10 +55,24 @@ export default function QueryEditor() {
 
   const handleRun = () => { runRef.current(sqlRef.current) }
 
-  const handleSave = () => {
-    const name = prompt('Nombre para la consulta:', '')
-    if (name && name.trim()) {
-      saveQuery(name.trim(), sqlRef.current)
+  const handleSave = async () => {
+    const { default: Swal } = await import('sweetalert2')
+    const result = await Swal.fire({
+      title: 'Nombre para la consulta',
+      input: 'text',
+      inputPlaceholder: 'Ingresá el nombre...',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      background: '#2d2d2d',
+      color: '#d4d4d4',
+      confirmButtonColor: '#0e639c',
+      cancelButtonColor: '#6c6c6c',
+      inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' },
+    })
+    if (result.isConfirmed && result.value?.trim()) {
+      saveQuery(result.value.trim(), sqlRef.current)
     }
   }
 

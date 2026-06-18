@@ -89,14 +89,43 @@ export function migrateOldProjects(): void {
 export async function promptSaveIfDirty(getDump: () => Promise<string>): Promise<boolean> {
   if (!isDirty()) return true
 
-  const save = confirm('¿Querés guardar los cambios en un archivo antes de continuar?')
-  if (!save) return true // discard
+  const { default: Swal } = await import('sweetalert2')
+
+  const confirmResult = await Swal.fire({
+    title: '¿Querés guardar los cambios?',
+    text: 'Tenés cambios sin guardar en un archivo.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Guardar',
+    cancelButtonText: 'Descartar',
+    reverseButtons: true,
+    background: '#2d2d2d',
+    color: '#d4d4d4',
+    confirmButtonColor: '#0e639c',
+    cancelButtonColor: '#6c6c6c',
+  })
+  if (!confirmResult.isConfirmed) return true // discard
 
   let name = localStorage.getItem('editorsql_current_project')
   if (!name) {
-    name = prompt('Nombre del proyecto:')
-    if (!name || !name.trim()) return false
+    const promptResult = await Swal.fire({
+      title: 'Nombre del proyecto',
+      input: 'text',
+      inputPlaceholder: 'Ingresá el nombre...',
+      showCancelButton: true,
+      confirmButtonText: 'Guardar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      background: '#2d2d2d',
+      color: '#d4d4d4',
+      confirmButtonColor: '#0e639c',
+      cancelButtonColor: '#6c6c6c',
+      inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' },
+    })
+    if (!promptResult.isConfirmed || !promptResult.value?.trim()) return false
+    name = promptResult.value.trim()
   }
+  if (!name) return false
   const trimmed = name.trim()
   const dump = await getDump()
   const data: ProjectData = {

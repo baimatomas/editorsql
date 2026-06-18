@@ -71,7 +71,8 @@ export default function TableBrowser() {
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
       } catch (e) {
-        alert('Error al cargar proyecto: ' + (e as Error).message)
+        const { default: Swal } = await import('sweetalert2')
+        await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al cargar proyecto: ' + (e as Error).message, confirmButtonText: 'OK', background: '#2d2d2d', color: '#d4d4d4', confirmButtonColor: '#0e639c' })
         return
       }
     } else {

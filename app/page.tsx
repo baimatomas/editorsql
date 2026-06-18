@@ -39,16 +39,28 @@ export default function Home() {
   const toggle = (key: PanelKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
 
+  const swalBase = () => ({
+    background: '#2d2d2d',
+    color: '#d4d4d4',
+    confirmButtonColor: '#0e639c',
+    cancelButtonColor: '#6c6c6c',
+    reverseButtons: true,
+  })
+
   const saveProject = async () => {
+    const { default: Swal } = await import('sweetalert2')
+
     let name = localStorage.getItem('editorsql_current_project')
     if (name && DEFAULT_PROJECTS.includes(name)) {
-      alert('No se puede sobrescribir un proyecto de ejemplo.\nUsá "Guardar Como" para crear una copia con otro nombre.')
+      await Swal.fire({ ...swalBase(), icon: 'error', title: 'Error', text: 'No se puede sobrescribir un proyecto de ejemplo.\nUsá "Guardar Como" para crear una copia con otro nombre.', confirmButtonText: 'OK' })
       return
     }
     if (!name) {
-      name = prompt('Nombre del proyecto:')
-      if (!name || !name.trim()) return
+      const result = await Swal.fire({ ...swalBase(), title: 'Nombre del proyecto', input: 'text', inputPlaceholder: 'Ingresá el nombre...', showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' } })
+      if (!result.isConfirmed || !result.value?.trim()) return
+      name = result.value.trim()
     }
+    if (!name) return
     const trimmed = name.trim()
     const dump = await getDump()
     const data: ProjectData = {
@@ -68,11 +80,13 @@ export default function Home() {
   }
 
   const saveAsProject = async () => {
-    const name = prompt('Guardar como:')
-    if (!name || !name.trim()) return
-    const trimmed = name.trim()
+    const { default: Swal } = await import('sweetalert2')
+
+    const result = await Swal.fire({ ...swalBase(), title: 'Guardar como', input: 'text', inputPlaceholder: 'Nombre del proyecto...', showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' } })
+    if (!result.isConfirmed || !result.value?.trim()) return
+    const trimmed = result.value.trim()
     if (DEFAULT_PROJECTS.includes(trimmed)) {
-      alert('No se puede usar el nombre de un proyecto de ejemplo.')
+      await Swal.fire({ ...swalBase(), icon: 'error', title: 'Error', text: 'No se puede usar el nombre de un proyecto de ejemplo.', confirmButtonText: 'OK' })
       return
     }
     const dump = await getDump()
@@ -113,9 +127,11 @@ export default function Home() {
   }
 
   const newProject = async () => {
-    const name = prompt('Nombre del nuevo proyecto:')
-    if (!name || !name.trim()) return
-    const trimmed = name.trim()
+    const { default: Swal } = await import('sweetalert2')
+
+    const result = await Swal.fire({ ...swalBase(), title: 'Nombre del nuevo proyecto', input: 'text', inputPlaceholder: 'Ingresá el nombre...', showCancelButton: true, confirmButtonText: 'Crear', cancelButtonText: 'Cancelar', inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' } })
+    if (!result.isConfirmed || !result.value?.trim()) return
+    const trimmed = result.value.trim()
 
     // Save current state to session cache
     const currentName = localStorage.getItem('editorsql_current_project')
