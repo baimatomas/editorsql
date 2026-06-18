@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB } from '@/app/providers'
+import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 
 const LS_QUERY = 'editorsql_query'
 
@@ -10,8 +11,10 @@ export default function QueryEditor() {
   const [sql, setSql] = useState('SELECT * FROM ')
   const sqlRef = useRef(sql)
   const loadedRef = useRef(false)
-  const { runQuery, queryError, ready, loading, queryTemplate, saveQuery } = useDB()
+  const { runQuery, queryError, ready, loading, queryTemplate, saveQuery, schemas } = useDB()
   const runRef = useRef(runQuery)
+  const schemasRef = useRef(schemas)
+  const disposeRef = useRef<{ dispose: () => void } | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_QUERY)
@@ -20,6 +23,7 @@ export default function QueryEditor() {
   }, [])
 
   useEffect(() => { sqlRef.current = sql }, [sql])
+  useEffect(() => { schemasRef.current = schemas }, [schemas])
   useEffect(() => { if (loadedRef.current) try { localStorage.setItem(LS_QUERY, sql) } catch {} }, [sql])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
@@ -36,6 +40,15 @@ export default function QueryEditor() {
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => { runRef.current(sqlRef.current) },
     })
+    disposeRef.current?.dispose()
+    disposeRef.current = registerSQLCompletion(monaco, schemasRef)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      disposeRef.current?.dispose()
+      disposeRef.current = null
+    }
   }, [])
 
   const handleRun = () => { runRef.current(sqlRef.current) }

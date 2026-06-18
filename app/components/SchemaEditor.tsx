@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB, DEFAULT_SCHEMA } from '@/app/providers'
+import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 
 const LS_SCHEMA = 'editorsql_schema'
 
@@ -10,8 +11,10 @@ export default function SchemaEditor() {
   const [sql, setSql] = useState(DEFAULT_SCHEMA)
   const sqlRef = useRef(sql)
   const loadedRef = useRef(false)
-  const { runSchema, schemaError, ready } = useDB()
+  const { runSchema, schemaError, ready, schemas } = useDB()
   const runRef = useRef(runSchema)
+  const schemasRef = useRef(schemas)
+  const disposeRef = useRef<{ dispose: () => void } | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_SCHEMA)
@@ -20,6 +23,7 @@ export default function SchemaEditor() {
   }, [])
 
   useEffect(() => { sqlRef.current = sql }, [sql])
+  useEffect(() => { schemasRef.current = schemas }, [schemas])
   useEffect(() => { runRef.current = runSchema }, [runSchema])
   useEffect(() => {
     if (!loadedRef.current) return
@@ -36,6 +40,15 @@ export default function SchemaEditor() {
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
       run: () => { runRef.current(sqlRef.current) },
     })
+    disposeRef.current?.dispose()
+    disposeRef.current = registerSQLCompletion(monaco, schemasRef)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      disposeRef.current?.dispose()
+      disposeRef.current = null
+    }
   }, [])
 
   const handleRun = () => { runRef.current(sqlRef.current) }
