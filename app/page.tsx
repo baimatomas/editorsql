@@ -16,29 +16,31 @@ export default function Home() {
           <span className="text-[11px] font-normal opacity-70">— Práctica PostgreSQL en el navegador</span>
         </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          <aside className="w-56 bg-[#252526] border-r border-[#3c3c3c] overflow-y-auto flex-shrink-0">
+        <Group orientation="horizontal" className="flex-1">
+          <Panel defaultSize={15} minSize={8} className="bg-[#252526]">
             <TableBrowser />
-          </aside>
-
-          <Group orientation="vertical" className="flex-1">
-            <Panel defaultSize={65} minSize={20}>
-              <Group orientation="horizontal">
-                <Panel defaultSize={50} minSize={15}>
-                  <SchemaEditor />
-                </Panel>
-                <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
-                <Panel defaultSize={50} minSize={15}>
-                  <QueryEditor />
-                </Panel>
-              </Group>
-            </Panel>
-            <Separator className="h-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-row-resize" />
-            <Panel defaultSize={35} minSize={10}>
-              <ResultTable />
-            </Panel>
-          </Group>
-        </div>
+          </Panel>
+          <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+          <Panel className="flex flex-col">
+            <Group orientation="vertical" className="flex-1">
+              <Panel defaultSize={65} minSize={20}>
+                <Group orientation="horizontal">
+                  <Panel defaultSize={50} minSize={15}>
+                    <SchemaEditor />
+                  </Panel>
+                  <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+                  <Panel defaultSize={50} minSize={15}>
+                    <QueryEditor />
+                  </Panel>
+                </Group>
+              </Panel>
+              <Separator className="h-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-row-resize" />
+              <Panel defaultSize={35} minSize={10}>
+                <ResultTable />
+              </Panel>
+            </Group>
+          </Panel>
+        </Group>
       </div>
     </DBProvider>
   )

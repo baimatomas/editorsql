@@ -15,6 +15,13 @@ interface TableInfo {
   columns: ColumnInfo[]
 }
 
+interface SavedQuery {
+  id: string
+  name: string
+  sql: string
+  createdAt: number
+}
+
 interface DBContextType {
   ready: boolean
   tables: TableInfo[]
@@ -24,7 +31,14 @@ interface DBContextType {
   loading: boolean
   runSchema: (sql: string) => Promise<void>
   runQuery: (sql: string) => Promise<void>
+  savedQueries: SavedQuery[]
+  saveQuery: (name: string, sql: string) => void
+  deleteQuery: (id: string) => void
+  queryTemplate: string | null
+  loadQuery: (id: string) => void
 }
+
+const LS_SAVED = 'editorsql_saved_queries'
 
 const DBContext = createContext<DBContextType | null>(null)
 
@@ -42,6 +56,19 @@ export function DBProvider({ children }: { children: ReactNode }) {
   const [queryResult, setQueryResult] = useState<unknown[] | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([])
+  const [queryTemplate, setQueryTemplate] = useState<string | null>(null)
+
+  useEffect(() => {
+    const stored = localStorage.getItem(LS_SAVED)
+    if (stored) {
+      try { setSavedQueries(JSON.parse(stored)) } catch { /* ignore */ }
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(LS_SAVED, JSON.stringify(savedQueries))
+  }, [savedQueries])
 
   useEffect(() => {
     const init = async () => {
@@ -124,9 +151,30 @@ export function DBProvider({ children }: { children: ReactNode }) {
     [db]
   )
 
+  const saveQuery = useCallback((name: string, sql: string) => {
+    setSavedQueries((prev) => [
+      { id: crypto.randomUUID(), name, sql, createdAt: Date.now() },
+      ...prev,
+    ])
+  }, [])
+
+  const deleteQuery = useCallback((id: string) => {
+    setSavedQueries((prev) => prev.filter((q) => q.id !== id))
+  }, [])
+
+  const loadQuery = useCallback((id: string) => {
+    const q = savedQueries.find((q) => q.id === id)
+    if (q) setQueryTemplate(q.sql)
+  }, [savedQueries])
+
   return (
     <DBContext.Provider
-      value={{ ready, tables, schemaError, queryError, queryResult, loading, runSchema, runQuery }}
+      value={{
+        ready, tables, schemaError, queryError, queryResult, loading,
+        runSchema, runQuery,
+        savedQueries, saveQuery, deleteQuery,
+        queryTemplate, loadQuery,
+      }}
     >
       {children}
     </DBContext.Provider>

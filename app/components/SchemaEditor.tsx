@@ -4,8 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
 import { useDB } from '@/app/providers'
 
-export default function SchemaEditor() {
-  const [sql, setSql] = useState(`-- Tabla de estudiantes
+const DEFAULT_SCHEMA = `-- Tabla de estudiantes
 CREATE TABLE estudiantes (
     id_estudiante   SERIAL PRIMARY KEY,
     nombre          VARCHAR(50)  NOT NULL,
@@ -52,13 +51,24 @@ INSERT INTO cursos (titulo, categoria, precio, duracion_horas) VALUES
 ('Machine Learning Aplicado',     'Machine Learning', 8900.00, 80),
 ('Redes Neuronales',              'Machine Learning', 9500.00, 90),
 ('Visualizaci\u00f3n con Tableau',     'Visualizaci\u00f3n',    5000.00, 40),
-('SQL desde cero para datos',     'Bases de Datos',   4500.00, 35);`)
+('SQL desde cero para datos',     'Bases de Datos',   4500.00, 35);`
+
+const LS_SCHEMA = 'editorsql_schema'
+
+export default function SchemaEditor() {
+  const [sql, setSql] = useState(DEFAULT_SCHEMA)
   const sqlRef = useRef(sql)
   const { runSchema, schemaError, ready } = useDB()
   const runRef = useRef(runSchema)
 
+  useEffect(() => {
+    const stored = localStorage.getItem(LS_SCHEMA)
+    if (stored !== null) setSql(stored)
+  }, [])
+
   useEffect(() => { sqlRef.current = sql }, [sql])
   useEffect(() => { runRef.current = runSchema }, [runSchema])
+  useEffect(() => { localStorage.setItem(LS_SCHEMA, sql) }, [sql])
 
   const handleEditorMount: OnMount = useCallback((_editor, monaco) => {
     _editor.addAction({
