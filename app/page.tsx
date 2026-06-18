@@ -162,54 +162,54 @@ export default function Home() {
 
   return (
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
-        <header className="bg-[#007acc] text-white px-4 py-1 text-sm font-semibold flex items-center gap-2 flex-shrink-0">
-          <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain mr-1" />
-          <span className="mr-auto text-sm font-semibold">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
-
-          <button
-            onClick={newProject}
-            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            Nuevo Proyecto
-          </button>
-
-          <button
-            onClick={saveProject}
-            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            Guardar Proyecto
-          </button>
-
-          <button
-            onClick={saveAsProject}
-            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            Guardar Como
-          </button>
-
-          <button
-            onClick={openProject}
-            className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            Abrir Proyecto
-          </button>
-
-          <div className="w-px h-4 bg-white/20 mx-1" />
-
-          <div className="flex items-center gap-1">
-            {(['sidebar', 'schema', 'query', 'results'] as PanelKey[]).map((key) => (
+        <header className="bg-[#007acc] text-white flex-shrink-0">
+          <div className="flex items-center px-4 py-1 gap-2">
+            <div className="w-[18%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
+              <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain" />
+            </div>
+            <span className="text-sm font-semibold text-nowrap">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
+            <div className="flex items-center gap-2 ml-auto">
               <button
-                key={key}
-                onClick={() => toggle(key)}
-                className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                  visible[key]
-                    ? 'bg-white/15 border-white/20 text-white'
-                    : 'bg-transparent border-transparent text-white/40 hover:text-white/60'
-                }`}
+                onClick={newProject}
+                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
               >
-                {LABELS[key]}
+                Nuevo Proyecto
               </button>
-            ))}
+              <button
+                onClick={saveProject}
+                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Guardar Proyecto
+              </button>
+              <button
+                onClick={saveAsProject}
+                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Guardar Como
+              </button>
+              <button
+                onClick={openProject}
+                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                Abrir Proyecto
+              </button>
+              <div className="w-px h-4 bg-white/20 mx-1" />
+              <div className="flex items-center gap-1">
+                {(['sidebar', 'schema', 'query', 'results'] as PanelKey[]).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => toggle(key)}
+                    className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
+                      visible[key]
+                        ? 'bg-white/15 border-white/20 text-white'
+                        : 'bg-transparent border-transparent text-white/40 hover:text-white/60'
+                    }`}
+                  >
+                    {LABELS[key]}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </header>
 
