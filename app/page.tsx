@@ -16,12 +16,12 @@ export default function Home() {
           <span className="text-[11px] font-normal opacity-70">— Práctica PostgreSQL en el navegador</span>
         </header>
 
-        <Group orientation="horizontal" className="flex-1">
-          <Panel defaultSize={40} minSize={10} className="bg-[#252526]">
+        <div className="flex flex-1 overflow-hidden">
+          <div className="bg-[#252526] overflow-y-auto" style={{ flex: '160 1 0px' }}>
             <TableBrowser />
-          </Panel>
-          <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
-          <Panel className="flex flex-col">
+          </div>
+          <div className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize flex-shrink-0" />
+          <div className="flex flex-col" style={{ flex: '100 1 0px' }}>
             <Group orientation="vertical" className="flex-1">
               <Panel defaultSize={65} minSize={20}>
                 <Group orientation="horizontal">
@@ -39,8 +39,8 @@ export default function Home() {
                 <ResultTable />
               </Panel>
             </Group>
-          </Panel>
-        </Group>
+          </div>
+        </div>
       </div>
     </DBProvider>
   )
