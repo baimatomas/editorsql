@@ -5,7 +5,7 @@ import { useDB } from '@/app/providers'
 
 export default function TableBrowser() {
   const { tables, ready, savedQueries, loadQuery, deleteQuery } = useDB()
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(['saved']))
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   const toggle = (name: string) => {
     const next = new Set(expanded)
@@ -24,47 +24,6 @@ export default function TableBrowser() {
 
   return (
     <div className="py-2">
-      {/* Saved Queries */}
-      <div className="mb-2">
-        <button
-          onClick={() => toggle('saved')}
-          className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-[#37373d]"
-        >
-          <span className="text-[10px] mr-1.5 w-2">
-            {expanded.has('saved') ? '▼' : '▶'}
-          </span>
-          <span className="text-orange-400 font-medium">Saved Queries</span>
-          {savedQueries.length > 0 && (
-            <span className="ml-1 text-gray-600">({savedQueries.length})</span>
-          )}
-        </button>
-        {expanded.has('saved') && (
-          <div>
-            {savedQueries.length === 0 && (
-              <div className="ml-5 pl-3 py-1 text-[10px] text-gray-600">
-                Aún no guardaste consultas
-              </div>
-            )}
-            {savedQueries.map((q) => (
-              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-[#37373d] cursor-pointer" onClick={() => loadQuery(q.id)}>
-                <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5V5zm0 3h6v1H5V8zm0 3h4v1H5v-1z"/>
-                </svg>
-                <span className="ml-1.5 text-xs text-gray-300 flex-1 truncate">{q.name}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteQuery(q.id) }}
-                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-[10px] px-1"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-[#3c3c3c] mb-2" />
-
       {/* Tables */}
       {tables.length === 0 ? (
         <div className="px-3 text-xs text-gray-500">
@@ -72,7 +31,7 @@ export default function TableBrowser() {
           Ejecutá un schema SQL arriba.
         </div>
       ) : (
-        <div>
+        <div className="mb-2">
           <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 mb-1">
             Tablas ({tables.length})
           </div>
@@ -110,6 +69,47 @@ export default function TableBrowser() {
           ))}
         </div>
       )}
+
+      <div className="border-t border-[#3c3c3c] mb-2" />
+
+      {/* Saved Queries */}
+      <div>
+        <button
+          onClick={() => toggle('saved')}
+          className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-[#37373d]"
+        >
+          <span className="text-[10px] mr-1.5 w-2">
+            {expanded.has('saved') ? '▼' : '▶'}
+          </span>
+          <span className="text-orange-400 font-medium">Saved Queries</span>
+          {savedQueries.length > 0 && (
+            <span className="ml-1 text-gray-600">({savedQueries.length})</span>
+          )}
+        </button>
+        {expanded.has('saved') && (
+          <div>
+            {savedQueries.length === 0 && (
+              <div className="ml-5 pl-3 py-1 text-[10px] text-gray-600">
+                Aún no guardaste consultas
+              </div>
+            )}
+            {savedQueries.map((q) => (
+              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-[#37373d] cursor-pointer" onClick={() => loadQuery(q.id)}>
+                <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5V5zm0 3h6v1H5V8zm0 3h4v1H5v-1z"/>
+                </svg>
+                <span className="ml-1.5 text-xs text-gray-300 flex-1 truncate">{q.name}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); deleteQuery(q.id) }}
+                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-[10px] px-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
