@@ -163,7 +163,7 @@ export default function Home() {
   return (
     <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
         <header className="bg-[#007acc] text-white flex-shrink-0">
-          <div className="flex items-center pl-1.5 pr-4 py-1 gap-2">
+          <div className="flex items-center pl-0.5 pr-4 py-1 gap-2">
             <div className="w-[16%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
               <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain" />
             </div>
