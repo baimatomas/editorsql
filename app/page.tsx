@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
+import Header from '@/app/components/Header'
 import DERViewer from '@/app/components/DERViewer'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
@@ -15,13 +16,6 @@ import {
 } from '@/app/lib/projectFiles'
 
 type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
-
-const LABELS: Record<PanelKey, string> = {
-  sidebar: 'Tablas',
-  schema: 'DER',
-  query: 'Query',
-  results: 'Resultados',
-}
 
 export default function Home() {
   const { getDump } = useDB()
@@ -191,57 +185,15 @@ export default function Home() {
   const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
 
   return (
-    <div className="h-screen flex flex-col bg-[#1e1e1e] text-gray-200">
-        <header className="bg-[#007acc] text-white flex-shrink-0">
-          <div className="flex items-center pl-0.5 pr-4 py-1 gap-2">
-            <div className="w-[16%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
-              <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain -ml-2.5" />
-            </div>
-            <span className="text-sm font-semibold text-nowrap">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
-            <div className="flex items-center gap-2 ml-auto">
-              <button
-                onClick={newProject}
-                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Nuevo Proyecto
-              </button>
-              <button
-                onClick={saveProject}
-                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Guardar Proyecto
-              </button>
-              <button
-                onClick={saveAsProject}
-                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Guardar Como
-              </button>
-              <button
-                onClick={openProject}
-                className="px-2 py-0.5 text-[11px] rounded border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-              >
-                Abrir Proyecto
-              </button>
-              <div className="w-px h-4 bg-white/20 mx-1" />
-              <div className="flex items-center gap-1">
-                {(['sidebar', 'schema', 'query', 'results'] as PanelKey[]).map((key) => (
-                  <button
-                    key={key}
-                    onClick={() => toggle(key)}
-                    className={`px-2 py-0.5 text-[11px] rounded border transition-colors ${
-                      visible[key]
-                        ? 'bg-white/15 border-white/20 text-white'
-                        : 'bg-transparent border-transparent text-white/40 hover:text-white/60'
-                    }`}
-                  >
-                    {LABELS[key]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </header>
+    <div className="h-screen flex flex-col bg-surface text-gray-200">
+        <Header
+          visible={visible}
+          onToggle={toggle}
+          onNewProject={newProject}
+          onSaveProject={saveProject}
+          onSaveAsProject={saveAsProject}
+          onOpenProject={openProject}
+        />
 
         {!hasAny ? (
           <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
@@ -251,10 +203,10 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel id="sidebar" defaultSize="16%" minSize="6%" className="bg-[#252526]">
+                <Panel id="sidebar" defaultSize="16%" minSize="6%" className="bg-surface-card">
                   <TableBrowser />
                 </Panel>
-                <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+                <Separator className="w-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-col-resize" />
               </>
             )}
 
@@ -267,7 +219,7 @@ export default function Home() {
                         <Panel id="query" defaultSize="50%" minSize="10%">
                           <QueryEditor />
                         </Panel>
-                        <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+                        <Separator className="w-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-col-resize" />
                         <Panel id="schema" defaultSize="50%" minSize="10%">
                           <DERViewer />
                         </Panel>
@@ -280,7 +232,7 @@ export default function Home() {
                   </Panel>
                   {visible.results && (
                     <>
-                      <Separator className="h-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-row-resize" />
+                      <Separator className="h-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-row-resize" />
                       <Panel id="results" defaultSize="35%" minSize="10%">
                         <ResultTable />
                       </Panel>

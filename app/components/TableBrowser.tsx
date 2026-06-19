@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Database, Table2, Eye, FunctionSquare, FileText, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, Square, FolderKanban } from 'lucide-react'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
+import Badge from '@/app/components/ui/Badge'
 import {
   getSessionProjects, saveSessionProject, getSessionProjectData,
   removeSessionProject, promptSaveIfDirty, clearDirty,
@@ -44,7 +46,6 @@ export default function TableBrowser() {
     const proceed = await promptSaveIfDirty(getDump)
     if (!proceed) return
 
-    // Save current to session
     const cur = localStorage.getItem('editorsql_current_project')
     if (cur && !DEFAULT_PROJECTS.includes(cur)) {
       const dump = await getDump()
@@ -58,7 +59,6 @@ export default function TableBrowser() {
       saveSessionProject(cur, data)
     }
 
-    // Load selected project
     if (DEFAULT_PROJECTS.includes(name)) {
       try {
         const head = await fetch(`/projects/${name}.sql`, { method: 'HEAD' })
@@ -112,47 +112,39 @@ export default function TableBrowser() {
   }
 
   return (
-    <div className="py-2">
-      {/* Project switcher dropdown */}
-      <div className="relative px-3 pb-2 mb-2 border-b border-[#3c3c3c]" ref={switcherRef}>
+    <div className="py-2 text-xs">
+      {/* Project switcher */}
+      <div className="relative px-3 pb-2 mb-2 border-b border-surface-border" ref={switcherRef}>
         <button
           onClick={() => setSwitcherOpen(!switcherOpen)}
-          className="flex items-center w-full text-xs text-green-400 font-semibold gap-1 hover:bg-[#37373d] px-1 py-1 rounded"
+          className="flex items-center w-full text-xs text-institutional-400 font-semibold gap-1.5 hover:bg-surface-hover px-1.5 py-1 rounded transition-colors duration-100"
         >
-          <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
-          </svg>
+          <Database size={14} className="flex-shrink-0 text-institutional-400" />
           <span className="flex-1 truncate text-left">{projectName || 'Sin proyecto'}</span>
-          <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M4 6l4 4 4-4H4z"/>
-          </svg>
+          <ChevronDown size={12} className="text-gray-500 flex-shrink-0" />
         </button>
 
         {switcherOpen && (
-          <div className="absolute left-0 right-3 top-full mt-1 bg-[#2d2d2d] border border-[#3c3c3c] rounded shadow-lg z-50 max-h-72 overflow-y-auto">
-            {/* Default projects */}
+          <div className="absolute left-0 right-3 top-full mt-1 bg-surface-elevated border border-surface-border rounded shadow-lg z-50 max-h-72 overflow-y-auto animate-fade-in">
             <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
               Proyectos de ejemplo
             </div>
             {DEFAULT_PROJECTS.map((name) => (
               <div
                 key={name}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-surface-hover cursor-pointer transition-colors duration-100"
                 onClick={() => switchToProject(name)}
               >
-                <svg className="w-3 h-3 text-amber-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
-                </svg>
+                <FolderKanban size={14} className="text-amber-500 flex-shrink-0" />
                 <span className="flex-1 truncate capitalize">{name}</span>
                 {name === projectName && (
-                  <span className="text-[10px] text-green-500">✓</span>
+                  <Badge variant="pk">activo</Badge>
                 )}
               </div>
             ))}
 
-            <div className="border-t border-[#3c3c3c] my-1" />
+            <div className="border-t border-surface-border my-1" />
 
-            {/* User session projects */}
             <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
               Mis proyectos
             </div>
@@ -164,23 +156,19 @@ export default function TableBrowser() {
               sessionProjects.map((name) => (
                 <div
                   key={name}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-[#37373d] cursor-pointer group"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
                   onClick={() => switchToProject(name)}
                 >
-                  <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
-                  </svg>
+                  <FolderOpen size={14} className="text-gray-500 flex-shrink-0" />
                   <span className="flex-1 truncate">{name}</span>
                   {name === projectName && (
-                    <span className="text-[10px] text-green-500">✓</span>
+                    <Badge variant="pk">activo</Badge>
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); removeFromSession(name) }}
-                    className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 px-1"
+                    className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 p-0.5 transition-opacity duration-100"
                   >
-                    <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M5 4V2.5A1.5 1.5 0 0 1 6.5 1h3A1.5 1.5 0 0 1 11 2.5V4h3.5v1H14l-.8 9.5A1.5 1.5 0 0 1 11.7 16H4.3a1.5 1.5 0 0 1-1.5-1.5L2 5h-.5V4H5zm2-1.5V4h2V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5z"/>
-                    </svg>
+                    <Trash2 size={12} />
                   </button>
                 </div>
               ))
@@ -189,6 +177,7 @@ export default function TableBrowser() {
         )}
       </div>
 
+      {/* Schema tree */}
       {schemas.map((s) => {
           const schemaKey = `schema:${s.schema_name}`
           const isSchemaOpen = expanded.has(schemaKey)
@@ -202,31 +191,28 @@ export default function TableBrowser() {
               <div className="flex items-center w-full text-xs text-gray-400 font-medium group">
                 <button
                   onClick={() => toggle(schemaKey)}
-                  className="flex items-center flex-1 text-left px-3 py-1 hover:bg-[#37373d]"
+                  className="flex items-center flex-1 text-left px-3 py-1 hover:bg-surface-hover transition-colors duration-100"
                 >
-                  <span className="text-[10px] mr-1.5 w-2 text-gray-500">
-                    {isSchemaOpen ? '▼' : '▶'}
-                  </span>
-                  <span className="text-purple-400">Schema: {s.schema_name}</span>
+                  {isSchemaOpen ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
+                  <Database size={12} className="mr-1.5 text-institutional-400 flex-shrink-0" />
+                  <span className="text-institutional-300">{s.schema_name}</span>
                 </button>
                 <button
                   onClick={refreshTables}
-                  className="p-1 mr-1 rounded text-gray-500 hover:text-white hover:bg-[#37373d] transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-1 mr-1 rounded text-gray-500 hover:text-white hover:bg-surface-hover transition-colors opacity-0 group-hover:opacity-100"
                   title="Refrescar esquemas"
                 >
-                  <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M8 2a6 6 0 0 0-5.3 8.7l1.2-.7A4.5 4.5 0 0 1 8 3.5V1l4 3-4 3V4.5A3.5 3.5 0 0 0 4.5 8a3.5 3.5 0 0 0 .3 1.5l-1.2.7A5 5 0 0 1 3 8a5 5 0 0 1 5-5V2zm0 12a6 6 0 0 0 5.3-8.7l-1.2.7A4.5 4.5 0 0 1 8 12.5V15l-4-3 4-3v2.5A3.5 3.5 0 0 0 11.5 8a3.5 3.5 0 0 0-.3-1.5l1.2-.7A5 5 0 0 1 13 8a5 5 0 0 1-5 5v1z"/>
-                  </svg>
+                  <RefreshCw size={12} />
                 </button>
               </div>
 
               {isSchemaOpen && (
-                <div className="ml-3">
+                <div className="ml-3 animate-fade-in">
                   {/* Tables */}
                   {totalTables > 0 && (
                     <div className="mb-1">
-                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
-                        Tablas ({totalTables})
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                        Tablas <Badge variant="count">{totalTables}</Badge>
                       </div>
                       {s.tables.map((t) => {
                         const tKey = `${schemaKey}:table:${t.name}`
@@ -234,25 +220,22 @@ export default function TableBrowser() {
                           <div key={t.name}>
                             <button
                               onClick={() => toggle(tKey)}
-                              className="flex items-center w-full text-left px-3 py-1 text-sm text-gray-300 hover:bg-[#37373d]"
+                              className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-300 hover:bg-surface-hover transition-colors duration-100"
                             >
-                              <span className="text-[10px] mr-1.5 text-gray-500 w-2">
-                                {expanded.has(tKey) ? '▼' : '▶'}
-                              </span>
-                              <span className="text-blue-400">{t.name}</span>
+                              {expanded.has(tKey) ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
+                              <Table2 size={12} className="mr-1.5 text-blue-400 flex-shrink-0" />
+                              <span className="text-blue-300">{t.name}</span>
                             </button>
                             {expanded.has(tKey) && (
-                              <div className="ml-4 border-l border-[#3c3c3c] ml-5 pl-2">
+                              <div className="ml-4 border-l border-surface-border ml-5 pl-2 animate-fade-in">
                                 {t.columns.map((c) => (
-                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-xs">
-                                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                                      <rect x="2" y="2" width="12" height="12" rx="1" />
-                                    </svg>
+                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] hover:bg-surface-hover/50 transition-colors duration-75">
+                                    <Square size={10} className="text-gray-600 flex-shrink-0" />
                                     <span className="text-gray-300">{c.column_name}</span>
-                                    <span className="text-gray-600">{c.data_type}</span>
-                                    {c.is_nullable === 'NO' && (
-                                      <span className="text-[10px] text-yellow-700 font-medium">NN</span>
-                                    )}
+                                    <Badge variant="type">{c.data_type}</Badge>
+                                    {c.is_primary_key && <Badge variant="pk">PK</Badge>}
+                                    {(t.foreignKeys ?? []).some((fk) => fk.column_name === c.column_name) && <Badge variant="fk">FK</Badge>}
+                                    {c.is_nullable === 'NO' && !c.is_primary_key && <Badge variant="nn">NN</Badge>}
                                   </div>
                                 ))}
                               </div>
@@ -266,8 +249,8 @@ export default function TableBrowser() {
                   {/* Views */}
                   {totalViews > 0 && (
                     <div className="mb-1">
-                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
-                        Vistas ({totalViews})
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                        Vistas <Badge variant="count">{totalViews}</Badge>
                       </div>
                       {s.views.map((v) => {
                         const vKey = `${schemaKey}:view:${v.name}`
@@ -275,22 +258,19 @@ export default function TableBrowser() {
                           <div key={v.name}>
                             <button
                               onClick={() => toggle(vKey)}
-                              className="flex items-center w-full text-left px-3 py-1 text-sm text-gray-300 hover:bg-[#37373d]"
+                              className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-300 hover:bg-surface-hover transition-colors duration-100"
                             >
-                              <span className="text-[10px] mr-1.5 text-gray-500 w-2">
-                                {expanded.has(vKey) ? '▼' : '▶'}
-                              </span>
-                              <span className="text-teal-400">{v.name}</span>
+                              {expanded.has(vKey) ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
+                              <Eye size={12} className="mr-1.5 text-teal-400 flex-shrink-0" />
+                              <span className="text-teal-300">{v.name}</span>
                             </button>
                             {expanded.has(vKey) && (
-                              <div className="ml-4 border-l border-[#3c3c3c] ml-5 pl-2">
+                              <div className="ml-4 border-l border-surface-border ml-5 pl-2 animate-fade-in">
                                 {v.columns.map((c) => (
-                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-xs">
-                                    <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                                      <rect x="2" y="2" width="12" height="12" rx="1" />
-                                    </svg>
+                                  <div key={c.column_name} className="flex items-center gap-1.5 px-2 py-0.5 text-[11px]">
+                                    <Square size={10} className="text-gray-600 flex-shrink-0" />
                                     <span className="text-gray-300">{c.column_name}</span>
-                                    <span className="text-gray-600">{c.data_type}</span>
+                                    <Badge variant="type">{c.data_type}</Badge>
                                   </div>
                                 ))}
                               </div>
@@ -304,20 +284,18 @@ export default function TableBrowser() {
                   {/* Functions */}
                   {totalFuncs > 0 && (
                     <div>
-                      <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-2 py-0.5">
-                        Funciones ({totalFuncs})
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                        Funciones <Badge variant="count">{totalFuncs}</Badge>
                       </div>
                       {s.functions.map((f) => (
                         <div
                           key={f.name}
-                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-gray-300 hover:bg-[#37373d]"
+                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-gray-300 hover:bg-surface-hover transition-colors duration-100"
                         >
-                          <svg className="w-3 h-3 text-orange-400 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                            <path d="M3 2h10v2H3V2zm0 5h10v2H3V7zm0 5h7v2H3v-2z"/>
-                          </svg>
+                          <FunctionSquare size={12} className="text-orange-400 flex-shrink-0" />
                           <span className="text-orange-300">{f.name}()</span>
                           {f.return_type && (
-                            <span className="text-gray-600">→ {f.return_type}</span>
+                            <Badge variant="type">→ {f.return_type}</Badge>
                           )}
                         </div>
                       ))}
@@ -330,40 +308,37 @@ export default function TableBrowser() {
         })
       }
 
-      <div className="border-t border-[#3c3c3c] mb-2 mt-2" />
+      <div className="border-t border-surface-border mb-2 mt-2" />
 
       {/* Saved Queries */}
       <div>
         <button
           onClick={() => toggle('saved')}
-          className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-[#37373d]"
+          className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-surface-hover transition-colors duration-100"
         >
-          <span className="text-[10px] mr-1.5 w-2">
-            {expanded.has('saved') ? '▼' : '▶'}
-          </span>
-          <span className="text-orange-400 font-medium">Queries guardadas</span>
+          {expanded.has('saved') ? <ChevronDown size={10} className="mr-1.5 w-2 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 w-2 flex-shrink-0" />}
+          <FileText size={12} className="mr-1.5 text-orange-400 flex-shrink-0" />
+          <span className="text-orange-300 font-medium">Queries guardadas</span>
           {savedQueries.length > 0 && (
             <span className="ml-1 text-gray-600">({savedQueries.length})</span>
           )}
         </button>
         {expanded.has('saved') && (
-          <div>
+          <div className="animate-fade-in">
             {savedQueries.length === 0 && (
               <div className="ml-5 pl-3 py-1 text-[10px] text-gray-600">
                 Aún no guardaste consultas
               </div>
             )}
             {savedQueries.map((q) => (
-              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-[#37373d] cursor-pointer" onClick={() => loadQuery(q.id)}>
-                <svg className="w-3 h-3 text-gray-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5V5zm0 3h6v1H5V8zm0 3h4v1H5v-1z"/>
-                </svg>
+              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-surface-hover cursor-pointer transition-colors duration-100" onClick={() => loadQuery(q.id)}>
+                <FileText size={12} className="text-gray-600 flex-shrink-0" />
                 <span className="ml-1.5 text-xs text-gray-300 flex-1 truncate">{q.name}</span>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteQuery(q.id) }}
-                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 text-[10px] px-1"
+                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 p-0.5 transition-opacity duration-100"
                 >
-                  ✕
+                  <Trash2 size={10} />
                 </button>
               </div>
             ))}

@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { RefreshCw, ZoomIn, ZoomOut } from 'lucide-react'
 import { useDB, type ObjectInfo } from '@/app/providers'
+import Toolbar from '@/app/components/ui/Toolbar'
+import Button from '@/app/components/ui/Button'
 
 const BOX_WIDTH = 230
 const HEADER_HEIGHT = 30
@@ -167,31 +170,22 @@ export default function DERViewer() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#1e1e1e]">
-      <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-[#252526] border-b border-[#3c3c3c] flex-shrink-0">
+    <div className="flex flex-col h-full bg-surface">
+      <Toolbar>
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">DER</span>
         <div className="relative ml-auto">
-          <button
-            onClick={() => setTablePickerOpen((open) => !open)}
-            className="px-3 py-0.5 text-xs rounded border border-[#3c3c3c] text-gray-300 hover:text-white hover:bg-[#37373d]"
-          >
+          <Button variant="outline" onClick={() => setTablePickerOpen((open) => !open)}>
             Tablas ({visibleTables.length}/{tables.length})
-          </button>
+          </Button>
           {tablePickerOpen && (
-            <div className="absolute right-0 top-full mt-1 w-64 max-h-80 overflow-auto rounded border border-[#3c3c3c] bg-[#2d2d2d] shadow-lg z-50">
-              <div className="flex gap-1 p-2 border-b border-[#3c3c3c]">
-                <button
-                  onClick={() => setHiddenTables(new Set())}
-                  className="flex-1 px-2 py-1 text-[11px] rounded bg-[#0e639c] text-white hover:bg-[#1177bb]"
-                >
+            <div className="absolute right-0 top-full mt-1 w-64 max-h-80 overflow-auto rounded border border-surface-border bg-surface-elevated shadow-lg z-50 animate-fade-in">
+              <div className="flex gap-1 p-2 border-b border-surface-border">
+                <Button variant="secondary" onClick={() => setHiddenTables(new Set())}>
                   Mostrar todas
-                </button>
-                <button
-                  onClick={() => setHiddenTables(new Set(tables.map((table) => table.key)))}
-                  className="flex-1 px-2 py-1 text-[11px] rounded bg-[#3c3c3c] text-gray-200 hover:bg-[#4a4a4a]"
-                >
+                </Button>
+                <Button variant="outline" onClick={() => setHiddenTables(new Set(tables.map((table) => table.key)))}>
                   Ocultar todas
-                </button>
+                </Button>
               </div>
               {tables.map((table) => {
                 const isHidden = hiddenTables.has(table.key)
@@ -199,9 +193,9 @@ export default function DERViewer() {
                   <button
                     key={table.key}
                     onClick={() => toggleTable(table.key)}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left text-gray-300 hover:bg-[#37373d]"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left text-gray-300 hover:bg-surface-hover transition-colors duration-100"
                   >
-                    <span className={isHidden ? 'text-gray-600' : 'text-blue-400'}>{isHidden ? '◌' : '●'}</span>
+                    <span className={isHidden ? 'text-gray-600' : 'text-institutional-400'}>{isHidden ? '◌' : '●'}</span>
                     <span className="flex-1 truncate">{table.name}</span>
                     <span className="text-[10px] text-gray-600">{table.schema}</span>
                   </button>
@@ -210,32 +204,24 @@ export default function DERViewer() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1 mr-2">
-          <button
-            onClick={() => setScale((s) => Math.max(0.25, +(s - 0.1).toFixed(2)))}
-            className="px-2 py-0.5 text-xs rounded border border-[#3c3c3c] text-gray-300 hover:text-white hover:bg-[#37373d] leading-none"
-          >
-            −
-          </button>
+        <div className="flex items-center gap-1">
+          <Button variant="icon" onClick={() => setScale((s) => Math.max(0.25, +(s - 0.1).toFixed(2)))}>
+            <ZoomOut size={14} />
+          </Button>
           <span className="text-xs text-gray-400 w-8 text-center tabular-nums">{Math.round(scale * 100)}%</span>
-          <button
-            onClick={() => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)))}
-            className="px-2 py-0.5 text-xs rounded border border-[#3c3c3c] text-gray-300 hover:text-white hover:bg-[#37373d] leading-none"
-          >
-            +
-          </button>
+          <Button variant="icon" onClick={() => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)))}>
+            <ZoomIn size={14} />
+          </Button>
         </div>
-        <button
-          onClick={refreshTables}
-          className="px-3 py-0.5 text-xs bg-[#0e639c] hover:bg-[#1177bb] text-white rounded font-medium"
-        >
-          Refrescar DER
-        </button>
-      </div>
+        <Button variant="secondary" onClick={refreshTables}>
+          <RefreshCw size={12} />
+          Refrescar
+        </Button>
+      </Toolbar>
 
       <div className="flex-1 overflow-auto">
         {visibleTables.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs text-gray-500">
+          <div className="flex h-full items-center justify-center text-xs text-gray-500 bg-surface">
             No hay tablas visibles en el DER.
           </div>
         ) : (

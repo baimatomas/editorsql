@@ -50,6 +50,7 @@ interface DBContextType {
   schemaError: string | null
   queryError: string | null
   queryResult: unknown[] | null
+  queryTime: number | null
   loading: boolean
   runSchema: (sql: string) => Promise<void>
   runQuery: (sql: string) => Promise<void>
@@ -79,6 +80,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   const [schemas, setSchemas] = useState<SchemaInfo[]>([])
   const [schemaError, setSchemaError] = useState<string | null>(null)
   const [queryResult, setQueryResult] = useState<unknown[] | null>(null)
+  const [queryTime, setQueryTime] = useState<number | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([])
@@ -350,6 +352,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       if (!db) return
       setQueryError(null)
       setQueryResult(null)
+      setQueryTime(null)
 
       const trimmed = sql.trim()
       if (!trimmed) return
@@ -362,6 +365,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const isQuery = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE'].includes(firstWord)
 
       setLoading(true)
+      const start = performance.now()
       try {
         if (isQuery) {
           const result = await db.query(trimmed)
@@ -371,8 +375,10 @@ export function DBProvider({ children }: { children: ReactNode }) {
           setQueryResult([])
           await refreshTables()
         }
+        setQueryTime(performance.now() - start)
         setLoading(false)
       } catch (e) {
+        setQueryTime(performance.now() - start)
         setQueryError((e as Error).message)
         setLoading(false)
       }
@@ -475,7 +481,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   return (
     <DBContext.Provider
       value={{
-        ready, schemas, schemaError, queryError, queryResult, loading,
+        ready, schemas, schemaError, queryError, queryResult, queryTime, loading,
         runSchema, runQuery,
         savedQueries, saveQuery, deleteQuery,
         queryTemplate, loadQuery,

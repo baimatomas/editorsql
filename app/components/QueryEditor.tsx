@@ -2,9 +2,13 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
+import { Play, Save } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 import { setDirty } from '@/app/lib/projectFiles'
+import Toolbar from '@/app/components/ui/Toolbar'
+import Button from '@/app/components/ui/Button'
+import Badge from '@/app/components/ui/Badge'
 
 const LS_QUERY = 'editorsql_query'
 
@@ -16,6 +20,9 @@ export default function QueryEditor() {
   const runRef = useRef(runQuery)
   const schemasRef = useRef(schemas)
   const disposeRef = useRef<{ dispose: () => void } | null>(null)
+  const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
+  const [cursorLine, setCursorLine] = useState(1)
+  const [cursorCol, setCursorCol] = useState(1)
 
   useEffect(() => {
     const stored = localStorage.getItem(LS_QUERY)
@@ -36,6 +43,7 @@ export default function QueryEditor() {
   }, [queryTemplate])
 
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
+    editorRef.current = editor
     editor.addAction({
       id: 'run-query',
       label: 'Ejecutar Query',
@@ -44,6 +52,11 @@ export default function QueryEditor() {
     })
     disposeRef.current?.dispose()
     disposeRef.current = registerSQLCompletion(monaco, schemasRef)
+
+    editor.onDidChangeCursorPosition((e) => {
+      setCursorLine(e.position.lineNumber)
+      setCursorCol(e.position.column)
+    })
   }, [])
 
   useEffect(() => {
@@ -78,27 +91,21 @@ export default function QueryEditor() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-[#252526] border-b border-[#3c3c3c] flex-shrink-0">
+      <Toolbar>
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
           Query SQL
         </span>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleSave}
-            disabled={!ready || !sql.trim()}
-            className="px-2 py-0.5 text-xs text-gray-400 hover:text-white border border-[#3c3c3c] hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed rounded font-medium"
-          >
-Guardar query
-          </button>
-          <button
-            onClick={handleRun}
-            disabled={!ready || !sql.trim() || loading}
-            className="px-3 py-0.5 text-xs bg-[#0e639c] hover:bg-[#1177bb] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-medium"
-          >
-            {loading ? 'Ejecutando...' : 'Ejecutar Query'}
-          </button>
+          <Button variant="outline" onClick={handleSave} disabled={!ready || !sql.trim()}>
+            <Save size={12} />
+            Guardar query
+          </Button>
+          <Button variant="secondary" onClick={handleRun} disabled={!ready || !sql.trim() || loading}>
+            <Play size={12} />
+            {loading ? 'Ejecutando...' : 'Ejecutar'}
+          </Button>
         </div>
-      </div>
+      </Toolbar>
       <div className="flex-1 min-h-0">
         <Editor
           height="100%"
@@ -119,10 +126,17 @@ Guardar query
         />
       </div>
       {queryError && (
-        <div className="px-3 py-1.5 bg-red-900/40 border-t border-red-800 text-red-300 text-xs font-mono flex-shrink-0">
+        <div className="px-3 py-1.5 bg-red-900/40 border-t border-red-800 text-red-300 text-xs font-mono flex-shrink-0 flex items-center gap-2">
+          <Badge variant="pk">Error</Badge>
           {queryError}
         </div>
       )}
+      <div className="flex items-center gap-3 px-3 py-0.5 bg-[#007acc] text-[10px] text-white flex-shrink-0">
+        <span className="font-semibold">SQL</span>
+        <span className="text-white/70">Ln {cursorLine}, Col {cursorCol}</span>
+        <span className="text-white/70">Spaces: 2</span>
+        <span className="ml-auto text-white/50">UTF-8</span>
+      </div>
     </div>
   )
 }
