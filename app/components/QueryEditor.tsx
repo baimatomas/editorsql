@@ -112,14 +112,14 @@ export default function QueryEditor() {
   return (
     <div className="flex flex-col h-full">
       {/* Tabs bar + Ejecutar */}
-      <div className="flex items-stretch bg-surface-elevated overflow-x-auto h-9 gap-2">
-        {queryTabs.map((tab) => (
+      <div className="flex items-stretch bg-surface-elevated border-b border-surface-border overflow-x-auto h-9">
+        {queryTabs.map((tab, i) => (
           <div
             key={tab.id}
-            className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${
+            className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${i > 0 ? '-ml-px' : ''} ${
               tab.id === activeTabId
-                ? 'bg-surface-card text-white rounded-t-xl border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40'
-                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-xl border border-surface-border'
+                ? 'bg-surface-card text-white rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
+                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-lg rounded-b-[14px] border border-surface-border border-b-0'
             }`}
             onClick={() => setActiveTabId(tab.id)}
             onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
@@ -152,7 +152,7 @@ export default function QueryEditor() {
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center justify-center w-7 h-7 self-center text-gray-500 hover:text-white hover:bg-surface-hover rounded-full text-sm font-bold leading-none transition-all duration-150"
+          className="flex items-center justify-center w-7 text-gray-500 hover:text-white hover:bg-surface-hover rounded-t-lg rounded-b-[14px] text-sm font-bold leading-none transition-all duration-150 border border-surface-border border-b-0"
           title="Nueva pestaña"
         >+</button>
         <div className="flex-1" />
