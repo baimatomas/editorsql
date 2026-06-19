@@ -112,14 +112,14 @@ export default function QueryEditor() {
   return (
     <div className="flex flex-col h-full">
       {/* Tabs bar + Ejecutar */}
-      <div className="flex items-stretch bg-surface-elevated border-b border-surface-border overflow-x-auto h-8">
+      <div className="flex items-stretch bg-surface-elevated overflow-x-auto h-8 gap-1.5">
         {queryTabs.map((tab) => (
           <div
             key={tab.id}
             className={`group flex items-center gap-1 cursor-pointer text-xs select-none ${
               tab.id === activeTabId
-                ? 'bg-surface-card text-white rounded-t-md border border-surface-border border-b-0 relative z-10 mb-[-1px]'
-                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-md border border-transparent hover:border-surface-border mb-[-1px]'
+                ? 'bg-surface-card text-white rounded-t-lg border border-surface-border border-b-0 relative z-10'
+                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-lg border border-surface-border'
             }`}
             onClick={() => setActiveTabId(tab.id)}
             onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
@@ -148,11 +148,11 @@ export default function QueryEditor() {
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-surface-hover rounded-t-md text-sm font-bold leading-none mb-[-1px]"
+          className="flex items-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-surface-hover rounded-t-lg text-sm font-bold leading-none"
           title="Nueva pestaña"
         >+</button>
-        <div className="flex-1 mb-[-1px]" />
-        <div className="flex items-center px-2 mb-[-1px]">
+        <div className="flex-1" />
+        <div className="flex items-center px-2">
           <Button variant="primary" onClick={handleRun} disabled={!ready || !currentSqlRef.current?.trim() || loading}>
             <Play size={13} />
             {loading ? 'Ejecutando...' : 'Ejecutar'}
@@ -161,7 +161,7 @@ export default function QueryEditor() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 bg-surface-card">
         <Editor
           key={activeTabId}
           height="100%"
