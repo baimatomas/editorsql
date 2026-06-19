@@ -2,14 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
-import { useDB, DEFAULT_SCHEMA } from '@/app/providers'
+import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 import { setDirty } from '@/app/lib/projectFiles'
 
 const LS_SCHEMA = 'editorsql_schema'
 
 export default function SchemaEditor() {
-  const [sql, setSql] = useState(DEFAULT_SCHEMA)
+  const [sql, setSql] = useState('')
   const sqlRef = useRef(sql)
   const loadedRef = useRef(false)
   const { runSchema, schemaError, ready, schemas } = useDB()

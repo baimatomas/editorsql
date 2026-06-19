@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
-import { useDB, DEFAULT_SCHEMA, DEFAULT_PROJECTS } from '@/app/providers'
+import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
 import SchemaEditor from '@/app/components/SchemaEditor'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
@@ -177,7 +177,7 @@ export default function Home() {
     }
 
     // Reset to default
-    localStorage.setItem('editorsql_schema', DEFAULT_SCHEMA)
+    localStorage.setItem('editorsql_schema', '-- Usá este panel para crear tablas (CREATE TABLE, INSERT, etc.)')
     localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
     localStorage.setItem('editorsql_saved_queries', '[]')
     localStorage.setItem('editorsql_current_project', trimmed)
