@@ -96,12 +96,12 @@ export default function QueryEditor() {
           Query SQL
         </span>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleSave} disabled={!ready || !sql.trim()}>
+          <Button variant="secondary" onClick={handleSave} disabled={!ready || !sql.trim()}>
             <Save size={12} />
             Guardar query
           </Button>
-          <Button variant="secondary" onClick={handleRun} disabled={!ready || !sql.trim() || loading}>
-            <Play size={12} />
+          <Button variant="primary" onClick={handleRun} disabled={!ready || !sql.trim() || loading}>
+            <Play size={13} />
             {loading ? 'Ejecutando...' : 'Ejecutar'}
           </Button>
         </div>
@@ -131,11 +131,14 @@ export default function QueryEditor() {
           {queryError}
         </div>
       )}
-      <div className="flex items-center gap-3 px-3 py-0.5 bg-[#007acc] text-[10px] text-white flex-shrink-0">
-        <span className="font-semibold">SQL</span>
-        <span className="text-white/70">Ln {cursorLine}, Col {cursorCol}</span>
-        <span className="text-white/70">Spaces: 2</span>
-        <span className="ml-auto text-white/50">UTF-8</span>
+      <div className="flex items-center gap-3 px-3 py-0.5 bg-surface-card border-t border-surface-border text-[10px] text-gray-500 flex-shrink-0">
+        <Badge variant="default">SQL</Badge>
+        <span>Ln {cursorLine}, Col {cursorCol}</span>
+        <span>Spaces: 2</span>
+        <span className={loading ? 'text-yellow-500 font-medium' : 'text-green-600'}>
+          {loading ? 'Ejecutando...' : 'Listo'}
+        </span>
+        <span className="ml-auto text-gray-600">UTF-8</span>
       </div>
     </div>
   )

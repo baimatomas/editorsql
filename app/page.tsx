@@ -25,6 +25,7 @@ export default function Home() {
     query: true,
     results: true,
   })
+  const [activeTab, setActiveTab] = useState<PanelKey>('query')
 
   useEffect(() => {
     migrateOldProjects()
@@ -59,8 +60,10 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const toggle = (key: PanelKey) =>
+  const toggle = (key: PanelKey) => {
+    setActiveTab(key)
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
 
   const swalBase = () => ({
     background: '#2d2d2d',
@@ -188,6 +191,7 @@ export default function Home() {
     <div className="h-screen flex flex-col bg-surface text-gray-200">
         <Header
           visible={visible}
+          activeTab={activeTab}
           onToggle={toggle}
           onNewProject={newProject}
           onSaveProject={saveProject}
@@ -206,7 +210,7 @@ export default function Home() {
                 <Panel id="sidebar" defaultSize="16%" minSize="6%" className="bg-surface-card">
                   <TableBrowser />
                 </Panel>
-                <Separator className="w-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-col-resize" />
+                <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
               </>
             )}
 
@@ -219,7 +223,7 @@ export default function Home() {
                         <Panel id="query" defaultSize="50%" minSize="10%">
                           <QueryEditor />
                         </Panel>
-                        <Separator className="w-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-col-resize" />
+                        <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
                         <Panel id="schema" defaultSize="50%" minSize="10%">
                           <DERViewer />
                         </Panel>
@@ -232,7 +236,7 @@ export default function Home() {
                   </Panel>
                   {visible.results && (
                     <>
-                      <Separator className="h-[3px] bg-surface-border hover:bg-institutional-600/50 transition-colors cursor-row-resize" />
+                      <Separator className="h-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-row-resize" />
                       <Panel id="results" defaultSize="35%" minSize="10%">
                         <ResultTable />
                       </Panel>

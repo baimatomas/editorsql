@@ -4,11 +4,11 @@ type BadgeVariant = 'default' | 'pk' | 'fk' | 'nn' | 'type' | 'count'
 
 const variants: Record<BadgeVariant, string> = {
   default: 'bg-surface-hover text-gray-400',
-  pk:      'bg-yellow-900/60 text-yellow-400',
-  fk:      'bg-violet-900/60 text-violet-400',
-  nn:      'bg-yellow-900/40 text-yellow-600',
-  type:    'bg-surface-border text-gray-500',
-  count:   'bg-surface-hover text-gray-500',
+  pk:      'bg-yellow-900/30 text-yellow-500',
+  fk:      'bg-violet-900/30 text-violet-400',
+  nn:      'bg-yellow-900/20 text-yellow-600',
+  type:    'text-gray-500',
+  count:   'text-gray-600',
 }
 
 export default function Badge({
@@ -22,7 +22,7 @@ export default function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded
+      className={`inline-flex items-center px-1 py-0.5 text-[10px] font-medium rounded
         leading-none ${variants[variant]} ${className}`}
     >
       {children}

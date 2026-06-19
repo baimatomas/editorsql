@@ -174,16 +174,16 @@ export default function DERViewer() {
       <Toolbar>
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">DER</span>
         <div className="relative ml-auto">
-          <Button variant="outline" onClick={() => setTablePickerOpen((open) => !open)}>
+          <Button variant="ghost" onClick={() => setTablePickerOpen((open) => !open)}>
             Tablas ({visibleTables.length}/{tables.length})
           </Button>
           {tablePickerOpen && (
             <div className="absolute right-0 top-full mt-1 w-64 max-h-80 overflow-auto rounded border border-surface-border bg-surface-elevated shadow-lg z-50 animate-fade-in">
               <div className="flex gap-1 p-2 border-b border-surface-border">
-                <Button variant="secondary" onClick={() => setHiddenTables(new Set())}>
+                <Button variant="primary" onClick={() => setHiddenTables(new Set())}>
                   Mostrar todas
                 </Button>
-                <Button variant="outline" onClick={() => setHiddenTables(new Set(tables.map((table) => table.key)))}>
+                <Button variant="ghost" onClick={() => setHiddenTables(new Set(tables.map((table) => table.key)))}>
                   Ocultar todas
                 </Button>
               </div>
@@ -236,10 +236,10 @@ export default function DERViewer() {
           >
             <defs>
               <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,6 L9,3 z" fill="#7c3aed" />
+                <path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6" />
               </marker>
               <marker id="arrow-active" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,6 L9,3 z" fill="#facc15" />
+                <path d="M0,0 L0,6 L9,3 z" fill="#818cf8" />
               </marker>
             </defs>
 
@@ -257,7 +257,7 @@ export default function DERViewer() {
                     <path
                       d={path.d}
                       fill="none"
-                      stroke={active ? '#facc15' : '#7c3aed'}
+                      stroke={active ? '#818cf8' : '#8b5cf6'}
                       strokeWidth={active ? 3 : 1.5}
                       markerEnd={active ? 'url(#arrow-active)' : 'url(#arrow)'}
                       opacity={active ? 1 : 0.75}
@@ -276,12 +276,12 @@ export default function DERViewer() {
                       width={BOX_WIDTH}
                       height={boxHeight}
                       rx="6"
-                      fill="#252526"
-                      stroke={highlighted ? '#facc15' : '#3c3c3c'}
+                      fill="#1f1f23"
+                      stroke={highlighted ? '#818cf8' : '#2d2d31'}
                       strokeWidth={highlighted ? 2.5 : 1}
                     />
                     <g onMouseDown={(e) => startDrag(e, table.key)} className="cursor-move">
-                      <rect x={x} y={y} width={BOX_WIDTH} height={HEADER_HEIGHT} rx="6" fill={highlighted ? '#7c3aed' : '#0e639c'} />
+                      <rect x={x} y={y} width={BOX_WIDTH} height={HEADER_HEIGHT} rx="6" fill={highlighted ? '#4338ca' : '#1e3a5f'} />
                       <text x={x + 12} y={y + 20} fill="#fff" fontSize="12" fontWeight="600" pointerEvents="none">
                         {table.name}
                       </text>
@@ -301,9 +301,9 @@ export default function DERViewer() {
                             y={rowY}
                             width={BOX_WIDTH}
                             height={ROW_HEIGHT}
-                            fill={highlightedColumn ? '#3b2f13' : index % 2 === 0 ? '#1f1f1f' : '#252526'}
+                            fill={highlightedColumn ? '#3b2f13' : index % 2 === 0 ? '#18181b' : '#1f1f23'}
                           />
-                          <text x={x + 10} y={rowY + 16} fill={highlightedColumn ? '#fde68a' : column.is_primary_key ? '#facc15' : isFk ? '#c4b5fd' : '#d4d4d4'} fontSize="11" fontWeight={column.is_primary_key || highlightedColumn ? 700 : 400}>
+                          <text x={x + 10} y={rowY + 16} fill={highlightedColumn ? '#fde68a' : column.is_primary_key ? '#eab308' : isFk ? '#a78bfa' : '#d4d4d4'} fontSize="11" fontWeight={column.is_primary_key || highlightedColumn ? 700 : 400}>
                             {column.is_primary_key ? 'PK ' : isFk ? 'FK ' : ''}{column.column_name}
                           </text>
                           <text x={x + BOX_WIDTH - 10} y={rowY + 16} fill={highlightedColumn ? '#fbbf24' : '#6b7280'} fontSize="10" textAnchor="end">
@@ -325,8 +325,8 @@ export default function DERViewer() {
               const tw = text.length * 6 + 20
               return (
                 <g>
-                  <rect x={mousePos.x + 12} y={mousePos.y - 24} width={tw} height="22" rx="4" fill="#111827" stroke="#facc15" />
-                  <text x={mousePos.x + 12 + tw / 2} y={mousePos.y - 8} fill="#fde68a" fontSize="10" textAnchor="middle">
+                  <rect x={mousePos.x + 12} y={mousePos.y - 24} width={tw} height="22" rx="4" fill="#0f1d2f" stroke="#818cf8" />
+                  <text x={mousePos.x + 12 + tw / 2} y={mousePos.y - 8} fill="#a5b4fc" fontSize="10" textAnchor="middle">
                     {text}
                   </text>
                 </g>

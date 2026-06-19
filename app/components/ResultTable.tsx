@@ -2,8 +2,8 @@
 
 import { Download } from 'lucide-react'
 import { useDB } from '@/app/providers'
+import Toolbar from '@/app/components/ui/Toolbar'
 import Button from '@/app/components/ui/Button'
-import Badge from '@/app/components/ui/Badge'
 
 export default function ResultTable() {
   const { queryResult, queryError, queryTime, loading } = useDB()
@@ -11,9 +11,9 @@ export default function ResultTable() {
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1.5 bg-surface-card border-b border-surface-border flex-shrink-0 shadow-sm">
-          <span>Resultados</span>
-        </div>
+        <Toolbar>
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+        </Toolbar>
         <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
           Ejecutando consulta...
         </div>
@@ -28,9 +28,9 @@ export default function ResultTable() {
   if (!queryResult) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1.5 bg-surface-card border-b border-surface-border flex-shrink-0 shadow-sm">
-          <span>Resultados</span>
-        </div>
+        <Toolbar>
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+        </Toolbar>
         <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
           Ejecutá una consulta para ver resultados
         </div>
@@ -41,14 +41,12 @@ export default function ResultTable() {
   if (queryResult.length === 0) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1.5 bg-surface-card border-b border-surface-border flex-shrink-0 shadow-sm">
-          <span>Resultados</span>
+        <Toolbar>
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
           {queryTime !== null && (
-            <span className="text-[10px] text-gray-500 font-medium normal-case tracking-normal">
-              <Badge variant="type">{queryTime.toFixed(1)} ms</Badge>
-            </span>
+            <span className="text-[10px] text-gray-600">{queryTime.toFixed(1)} ms</span>
           )}
-        </div>
+        </Toolbar>
         <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
           La consulta se ejecutó correctamente sin resultados para mostrar
         </div>
@@ -79,18 +77,18 @@ export default function ResultTable() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between text-[10px] font-semibold text-gray-500 uppercase tracking-widest px-3 py-1.5 bg-surface-card border-b border-surface-border flex-shrink-0 shadow-sm">
-        <span>Resultados</span>
+      <Toolbar>
+        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
         <div className="flex items-center gap-2">
           {queryTime !== null && (
-            <Badge variant="type">{queryTime.toFixed(1)} ms</Badge>
+            <span className="text-[10px] text-gray-600">{queryTime.toFixed(1)} ms</span>
           )}
-          <Button variant="outline" onClick={exportCSV} className="text-[10px] normal-case tracking-normal">
+          <Button variant="ghost" onClick={exportCSV}>
             <Download size={12} />
-            Exportar CSV
+            CSV
           </Button>
         </div>
-      </div>
+      </Toolbar>
       <div className="flex-1 overflow-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -98,7 +96,7 @@ export default function ResultTable() {
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-3 py-1.5 text-left text-gray-400 font-medium border-b border-surface-border whitespace-nowrap"
+                  className="px-3 py-1.5 text-left text-gray-300 font-semibold border-b border-surface-border whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -114,10 +112,10 @@ export default function ResultTable() {
                 {columns.map((col) => (
                   <td
                     key={col}
-                    className="px-3 py-1 text-gray-300 border-b border-surface-border whitespace-nowrap"
+                    className="px-3 py-1 text-gray-300 border-b border-surface-border/40 whitespace-nowrap"
                   >
                     {row[col] === null ? (
-                      <Badge variant="nn">NULL</Badge>
+                      <span className="text-gray-600 italic">NULL</span>
                     ) : (
                       String(row[col])
                     )}
@@ -128,7 +126,7 @@ export default function ResultTable() {
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-gray-500 bg-surface-card border-t border-surface-border flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-gray-500 bg-surface border-t border-surface-border flex-shrink-0">
         <span>{queryResult.length} fila(s)</span>
       </div>
     </div>

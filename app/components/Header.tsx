@@ -1,19 +1,20 @@
 'use client'
 
-import { FilePlus, Save, SaveAll, FolderOpen, Upload } from 'lucide-react'
+import { FilePlus, Save, SaveAll, FolderOpen } from 'lucide-react'
 import Button from '@/app/components/ui/Button'
 
-type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
+export type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
 
-const LABELS: Record<PanelKey, string> = {
-  sidebar: 'Tablas',
-  schema: 'DER',
-  query: 'Query',
-  results: 'Resultados',
-}
+const TABS: { key: PanelKey; label: string }[] = [
+  { key: 'sidebar', label: 'Tablas' },
+  { key: 'schema', label: 'DER' },
+  { key: 'query', label: 'Query' },
+  { key: 'results', label: 'Resultados' },
+]
 
 export default function Header({
   visible,
+  activeTab,
   onToggle,
   onNewProject,
   onSaveProject,
@@ -21,6 +22,7 @@ export default function Header({
   onOpenProject,
 }: {
   visible: Record<PanelKey, boolean>
+  activeTab: PanelKey | null
   onToggle: (key: PanelKey) => void
   onNewProject: () => void
   onSaveProject: () => void
@@ -29,59 +31,65 @@ export default function Header({
 }) {
   return (
     <header className="bg-institutional-800 text-white flex-shrink-0 shadow-md z-10">
-      <div className="flex items-center px-4 py-2 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center px-3 py-1 gap-2">
+        {/* Branding */}
+        <div className="flex items-center gap-2 min-w-0">
           <img
             src="/logo-unr-blanco.png"
             alt="UNR"
-            className="w-[110px] h-7 object-contain flex-shrink-0"
+            className="w-[90px] h-6 object-contain flex-shrink-0"
           />
-          <div className="flex flex-col leading-tight border-l border-white/20 pl-3">
-            <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap">
+          <div className="flex flex-col leading-tight border-l border-white/20 pl-2">
+            <span className="text-[10px] font-semibold tracking-wide whitespace-nowrap leading-tight">
               FACULTAD DE CIENCIAS
             </span>
-            <span className="text-[11px] font-semibold tracking-wide whitespace-nowrap">
+            <span className="text-[10px] font-semibold tracking-wide whitespace-nowrap leading-tight">
               ECONÓMICAS Y ESTADÍSTICA
             </span>
           </div>
         </div>
 
-        <div className="flex flex-col leading-tight border-l border-white/20 pl-3 min-w-0">
-          <span className="text-sm font-bold whitespace-nowrap">
+        {/* Title */}
+        <div className="flex flex-col leading-tight border-l border-white/20 pl-2 mr-1">
+          <span className="text-sm font-bold whitespace-nowrap leading-tight">
             Entorno de Práctica SQL
           </span>
-          <span className="text-[10px] text-white/70 whitespace-nowrap">
+          <span className="text-[9px] text-white/60 whitespace-nowrap leading-tight">
             Desarrollado por la asignatura Base de Datos
           </span>
         </div>
 
-        <div className="flex items-center gap-1 ml-auto min-w-0">
-          <Button variant="ghost" onClick={onNewProject}>
-            <FilePlus size={14} />
-            Nuevo
-          </Button>
-          <Button variant="ghost" onClick={onSaveProject}>
-            <Save size={14} />
-            Guardar
-          </Button>
-          <Button variant="ghost" onClick={onSaveAsProject}>
-            <SaveAll size={14} />
-            Guardar Como
-          </Button>
-          <Button variant="ghost" onClick={onOpenProject}>
-            <FolderOpen size={14} />
-            Abrir
-          </Button>
-          <div className="w-px h-4 bg-white/20 mx-1" />
-          {(Object.keys(LABELS) as PanelKey[]).map((key) => (
+        {/* Tabs */}
+        <div className="flex items-center gap-0.5 ml-auto h-7">
+          {TABS.map(({ key, label }) => (
             <Button
               key={key}
-              variant={visible[key] ? 'secondary' : 'ghost'}
+              variant={activeTab === key ? 'tab-active' : 'tab'}
               onClick={() => onToggle(key)}
             >
-              {LABELS[key]}
+              {label}
             </Button>
           ))}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 ml-2">
+          <Button variant="toolbar" onClick={onNewProject}>
+            <FilePlus size={13} />
+            Nuevo
+          </Button>
+          <Button variant="toolbar" onClick={onSaveProject}>
+            <Save size={13} />
+            Guardar
+          </Button>
+          <Button variant="toolbar" onClick={onSaveAsProject}>
+            <SaveAll size={13} />
+            G. Como
+          </Button>
+          <Button variant="toolbar" onClick={onOpenProject}>
+            <FolderOpen size={13} />
+            Abrir
+          </Button>
         </div>
       </div>
     </header>
