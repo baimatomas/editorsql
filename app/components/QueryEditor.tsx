@@ -2,45 +2,44 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
-import { Play, Save } from 'lucide-react'
+import { Play, X } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
-import { setDirty } from '@/app/lib/projectFiles'
 import Toolbar from '@/app/components/ui/Toolbar'
 import Button from '@/app/components/ui/Button'
 import Badge from '@/app/components/ui/Badge'
 
-const LS_QUERY = 'editorsql_query'
-
 export default function QueryEditor() {
-  const [sql, setSql] = useState('-- Ejecutá las consultas con Ctrl + Enter\n')
-  const sqlRef = useRef(sql)
+  const {
+    runQuery, queryError, ready, loading, schemas,
+    queryTabs, activeTabId, addQueryTab, closeQueryTab, renameQueryTab, setActiveTabId, setQueryTabSQL,
+  } = useDB()
+
+  const activeTab = queryTabs.find(t => t.id === activeTabId)
+  const currentSqlRef = useRef(activeTab?.sql ?? '')
+  currentSqlRef.current = activeTab?.sql ?? ''
+
   const loadedRef = useRef(false)
-  const { runQuery, queryError, ready, loading, queryTemplate, saveQuery, schemas } = useDB()
   const runRef = useRef(runQuery)
   const schemasRef = useRef(schemas)
   const disposeRef = useRef<{ dispose: () => void } | null>(null)
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
   const [cursorLine, setCursorLine] = useState(1)
   const [cursorCol, setCursorCol] = useState(1)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const renameInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const stored = localStorage.getItem(LS_QUERY)
-    if (stored !== null) setSql(stored)
-    loadedRef.current = true
-  }, [])
-
-  useEffect(() => { sqlRef.current = sql }, [sql])
   useEffect(() => { schemasRef.current = schemas }, [schemas])
-  useEffect(() => { if (loadedRef.current) try { localStorage.setItem(LS_QUERY, sql) } catch {} }, [sql])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
+  // Focus rename input when renaming starts
   useEffect(() => {
-    if (queryTemplate !== null) {
-      setSql(queryTemplate)
-      setDirty()
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus()
+      renameInputRef.current.select()
     }
-  }, [queryTemplate])
+  }, [renamingId])
 
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
@@ -48,7 +47,7 @@ export default function QueryEditor() {
       id: 'run-query',
       label: 'Ejecutar Query',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-      run: () => { runRef.current(sqlRef.current) },
+      run: () => { runRef.current(currentSqlRef.current) },
     })
     disposeRef.current?.dispose()
     disposeRef.current = registerSQLCompletion(monaco, schemasRef)
@@ -60,59 +59,105 @@ export default function QueryEditor() {
   }, [])
 
   useEffect(() => {
+    loadedRef.current = true
+  }, [])
+
+  useEffect(() => {
     return () => {
       disposeRef.current?.dispose()
       disposeRef.current = null
     }
   }, [])
 
-  const handleRun = () => { runRef.current(sqlRef.current) }
+  const handleRun = () => { runRef.current(currentSqlRef.current) }
 
-  const handleSave = async () => {
-    const { default: Swal } = await import('sweetalert2')
-    const result = await Swal.fire({
-      title: 'Nombre para la consulta',
-      input: 'text',
-      inputPlaceholder: 'Ingresá el nombre...',
-      showCancelButton: true,
-      confirmButtonText: 'Guardar',
-      cancelButtonText: 'Cancelar',
-      reverseButtons: true,
-      background: '#2d2d2d',
-      color: '#d4d4d4',
-      confirmButtonColor: '#0e639c',
-      cancelButtonColor: '#6c6c6c',
-      inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' },
-    })
-    if (result.isConfirmed && result.value?.trim()) {
-      saveQuery(result.value.trim(), sqlRef.current)
-    }
+  const handleDoubleClick = (tabId: string, currentName: string) => {
+    setRenamingId(tabId)
+    setRenameValue(currentName)
   }
+
+  const handleRenameSubmit = () => {
+    if (renamingId && renameValue.trim()) {
+      renameQueryTab(renamingId, renameValue.trim())
+    }
+    setRenamingId(null)
+  }
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleRenameSubmit()
+    if (e.key === 'Escape') setRenamingId(null)
+  }
+
+  // Tab bar height: h-8
 
   return (
     <div className="flex flex-col h-full">
+      {/* Tabs bar */}
+      <div className="flex items-center gap-px bg-surface-card border-b border-surface-border overflow-x-auto">
+        {queryTabs.map((tab) => (
+          <div
+            key={tab.id}
+            className={`group flex items-center min-w-0 cursor-pointer border-b-2 transition-colors duration-100 ${
+              tab.id === activeTabId
+                ? 'border-institutional-400 bg-institutional-700/40 text-white'
+                : 'border-transparent text-gray-500 hover:text-gray-300'
+            }`}
+            onClick={() => setActiveTabId(tab.id)}
+            onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
+          >
+            {renamingId === tab.id ? (
+              <input
+                ref={renameInputRef}
+                type="text"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onBlur={handleRenameSubmit}
+                onKeyDown={handleRenameKeyDown}
+                className="bg-surface-elevated text-white text-xs px-2 py-1 outline-none border border-institutional-400 rounded w-24"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span className="text-xs px-2 py-1.5 truncate max-w-[120px]">{tab.name}</span>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); closeQueryTab(tab.id) }}
+              className="mr-1 text-gray-500 hover:text-gray-300 hover:bg-white/10 rounded-sm p-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+        <button
+          onClick={() => addQueryTab()}
+          className="flex items-center justify-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/10 transition-colors flex-shrink-0"
+          title="Nueva pestaña"
+        >
+          <span className="text-sm font-bold leading-none">+</span>
+        </button>
+      </div>
+
+      {/* Toolbar */}
       <Toolbar>
         <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
           Query SQL
         </span>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" onClick={handleSave} disabled={!ready || !sql.trim()}>
-            <Save size={12} />
-            Guardar query
-          </Button>
-          <Button variant="primary" onClick={handleRun} disabled={!ready || !sql.trim() || loading}>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="primary" onClick={handleRun} disabled={!ready || !currentSqlRef.current?.trim() || loading}>
             <Play size={13} />
             {loading ? 'Ejecutando...' : 'Ejecutar'}
           </Button>
         </div>
       </Toolbar>
+
+      {/* Editor */}
       <div className="flex-1 min-h-0">
         <Editor
+          key={activeTabId}
           height="100%"
           defaultLanguage="sql"
           theme="vs-dark"
-          value={sql}
-          onChange={(val) => { setSql(val ?? ''); setDirty() }}
+          value={activeTab?.sql ?? ''}
+          onChange={(val) => { if (activeTab) setQueryTabSQL(activeTab.id, val ?? '') }}
           onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },
@@ -125,12 +170,16 @@ export default function QueryEditor() {
           }}
         />
       </div>
+
+      {/* Error */}
       {queryError && (
         <div className="px-3 py-1.5 bg-red-900/40 border-t border-red-800 text-red-300 text-xs font-mono flex-shrink-0 flex items-center gap-2">
           <Badge variant="pk">Error</Badge>
           {queryError}
         </div>
       )}
+
+      {/* Status bar */}
       <div className="flex items-center gap-3 px-3 py-0.5 bg-surface-card border-t border-surface-border text-[10px] text-gray-500 flex-shrink-0">
         <Badge variant="default">SQL</Badge>
         <span>Ln {cursorLine}, Col {cursorCol}</span>

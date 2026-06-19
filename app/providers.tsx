@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
 import { setDirty } from '@/app/lib/projectFiles'
 
@@ -37,6 +37,12 @@ export interface SchemaInfo {
   functions: FuncInfo[]
 }
 
+export interface QueryTab {
+  id: string
+  name: string
+  sql: string
+}
+
 interface SavedQuery {
   id: string
   name: string
@@ -57,8 +63,13 @@ interface DBContextType {
   savedQueries: SavedQuery[]
   saveQuery: (name: string, sql: string) => void
   deleteQuery: (id: string) => void
-  queryTemplate: string | null
-  loadQuery: (id: string) => void
+  queryTabs: QueryTab[]
+  activeTabId: string
+  addQueryTab: (name?: string, sql?: string) => string
+  closeQueryTab: (id: string) => void
+  renameQueryTab: (id: string, name: string) => void
+  setActiveTabId: (id: string) => void
+  setQueryTabSQL: (id: string, sql: string) => void
   getDump: () => Promise<string>
   refreshTables: () => Promise<void>
 }
@@ -84,7 +95,8 @@ export function DBProvider({ children }: { children: ReactNode }) {
   const [queryError, setQueryError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([])
-  const [queryTemplate, setQueryTemplate] = useState<string | null>(null)
+  const [queryTabs, setQueryTabs] = useState<QueryTab[]>([])
+  const [activeTabId, setActiveTabId] = useState<string>('')
   const [restoreAttempted, setRestoreAttempted] = useState(false)
 
   useEffect(() => {
@@ -94,9 +106,47 @@ export function DBProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Load query tabs from localStorage, migrating from old single-query format
+  useEffect(() => {
+    const stored = localStorage.getItem('editorsql_query_tabs')
+    if (stored) {
+      try {
+        const tabs = JSON.parse(stored) as QueryTab[]
+        if (tabs.length > 0) {
+          setQueryTabs(tabs)
+          const activeId = localStorage.getItem('editorsql_active_tab_id')
+          if (activeId && tabs.some(t => t.id === activeId)) {
+            setActiveTabId(activeId)
+          } else {
+            setActiveTabId(tabs[0].id)
+          }
+          return
+        }
+      } catch { /* ignore */ }
+    }
+    // Migrate from old single query
+    const oldQuery = localStorage.getItem('editorsql_query')
+    const defaultTab: QueryTab = {
+      id: crypto.randomUUID(),
+      name: 'Query1',
+      sql: oldQuery ?? '-- Ejecutá las consultas con Ctrl + Enter\n',
+    }
+    setQueryTabs([defaultTab])
+    setActiveTabId(defaultTab.id)
+    try { localStorage.setItem('editorsql_query_tabs', JSON.stringify([defaultTab])) } catch {}
+  }, [])
+
   useEffect(() => {
     try { localStorage.setItem(LS_SAVED, JSON.stringify(savedQueries)) } catch {}
   }, [savedQueries])
+
+  useEffect(() => {
+    try { localStorage.setItem('editorsql_query_tabs', JSON.stringify(queryTabs)) } catch {}
+  }, [queryTabs])
+
+  useEffect(() => {
+    if (activeTabId) try { localStorage.setItem('editorsql_active_tab_id', activeTabId) } catch {}
+  }, [activeTabId])
 
   useEffect(() => {
     const init = async () => {
@@ -399,10 +449,60 @@ export function DBProvider({ children }: { children: ReactNode }) {
     setDirty()
   }, [])
 
-  const loadQuery = useCallback((id: string) => {
-    const q = savedQueries.find((q) => q.id === id)
-    if (q) setQueryTemplate(q.sql)
-  }, [savedQueries])
+  // Track latest queryTabs + activeTabId via refs for use inside callbacks
+  const queryTabsRef = useRef(queryTabs)
+  queryTabsRef.current = queryTabs
+  const activeTabIdRef = useRef(activeTabId)
+  activeTabIdRef.current = activeTabId
+
+  const addQueryTab = useCallback((name?: string, sql?: string) => {
+    const id = crypto.randomUUID()
+    let maxNum = 0
+    for (const tab of queryTabsRef.current) {
+      const m = tab.name.match(/^Query(\d+)$/)
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10))
+    }
+    const newTab: QueryTab = {
+      id,
+      name: name ?? `Query${maxNum + 1}`,
+      sql: sql ?? '-- Ejecutá las consultas con Ctrl + Enter\n',
+    }
+    setQueryTabs((prev) => [...prev, newTab])
+    setActiveTabId(id)
+    return id
+  }, [])
+
+  const closeQueryTab = useCallback((id: string) => {
+    setQueryTabs((prev) => {
+      if (prev.length === 0) return prev
+      const idx = prev.findIndex((t) => t.id === id)
+      if (idx === -1) return prev
+      const next = prev.filter((t) => t.id !== id)
+      if (next.length === 0) {
+        const defaultTab: QueryTab = {
+          id: crypto.randomUUID(),
+          name: 'Query1',
+          sql: '-- Ejecutá las consultas con Ctrl + Enter\n',
+        }
+        setActiveTabId(defaultTab.id)
+        return [defaultTab]
+      }
+      if (id === activeTabIdRef.current) {
+        const newIdx = Math.min(idx, next.length - 1)
+        setActiveTabId(next[newIdx].id)
+      }
+      return next
+    })
+  }, [])
+
+  const renameQueryTab = useCallback((id: string, name: string) => {
+    setQueryTabs((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)))
+  }, [])
+
+  const setQueryTabSQL = useCallback((id: string, sql: string) => {
+    setQueryTabs((prev) => prev.map((t) => (t.id === id ? { ...t, sql } : t)))
+    setDirty()
+  }, [])
 
   // Auto-restore project data after PGlite initialization
   useEffect(() => {
@@ -420,7 +520,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('editorsql_load_default', 'northwind')
         localStorage.setItem('editorsql_current_project', 'northwind')
         localStorage.setItem('editorsql_schema', hint)
-        localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
+        localStorage.setItem('editorsql_query_tabs', JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }]))
         localStorage.setItem('editorsql_saved_queries', '[]')
         location.reload()
       } else if (DEFAULT_PROJECTS.includes(currentProject)) {
@@ -428,7 +528,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('editorsql_load_default', currentProject)
         const hint = `-- Proyecto: ${currentProject}\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)`
         localStorage.setItem('editorsql_schema', hint)
-        localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
+        localStorage.setItem('editorsql_query_tabs', JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }]))
         localStorage.setItem('editorsql_saved_queries', '[]')
         location.reload()
       } else {
@@ -484,7 +584,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         ready, schemas, schemaError, queryError, queryResult, queryTime, loading,
         runSchema, runQuery,
         savedQueries, saveQuery, deleteQuery,
-        queryTemplate, loadQuery,
+        queryTabs, activeTabId, addQueryTab, closeQueryTab, renameQueryTab, setActiveTabId, setQueryTabSQL,
         getDump, refreshTables,
       }}
     >

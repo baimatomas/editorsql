@@ -11,7 +11,7 @@ import {
 } from '@/app/lib/projectFiles'
 
 export default function TableBrowser() {
-  const { schemas, ready, savedQueries, loadQuery, deleteQuery, getDump, refreshTables } = useDB()
+  const { schemas, ready, savedQueries, addQueryTab, deleteQuery, getDump, refreshTables } = useDB()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [projectName, setProjectName] = useState<string | null>(null)
   const [switcherOpen, setSwitcherOpen] = useState(false)
@@ -337,7 +337,7 @@ export default function TableBrowser() {
               </div>
             )}
             {savedQueries.map((q) => (
-              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-surface-hover cursor-pointer transition-colors duration-100" onClick={() => loadQuery(q.id)}>
+              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-surface-hover cursor-pointer transition-colors duration-100" onClick={() => addQueryTab(q.name, q.sql)}>
                 <FileText size={12} className="text-gray-600 flex-shrink-0" />
                 <span className="ml-1.5 text-xs text-gray-300 flex-1 truncate">{q.name}</span>
                 <button

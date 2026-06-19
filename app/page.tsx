@@ -89,7 +89,7 @@ export default function Home() {
     const data: ProjectData = {
       name: trimmed,
       schema: localStorage.getItem('editorsql_schema') ?? '',
-      query: localStorage.getItem('editorsql_query') ?? '',
+      query: localStorage.getItem('editorsql_query_tabs') ?? '[]',
       savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
       dataDump: dump,
     }
@@ -116,7 +116,7 @@ export default function Home() {
     const data: ProjectData = {
       name: trimmed,
       schema: localStorage.getItem('editorsql_schema') ?? '',
-      query: localStorage.getItem('editorsql_query') ?? '',
+      query: localStorage.getItem('editorsql_query_tabs') ?? '[]',
       savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
       dataDump: dump,
     }
@@ -134,7 +134,7 @@ export default function Home() {
     if (!data) return
 
     localStorage.setItem('editorsql_schema', data.schema)
-    localStorage.setItem('editorsql_query', data.query)
+    localStorage.setItem('editorsql_query_tabs', data.query)
     localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
     if (data.dataDump) {
       localStorage.setItem('editorsql_restore_data', data.dataDump)
@@ -163,7 +163,7 @@ export default function Home() {
       const data: ProjectData = {
         name: currentName,
         schema: localStorage.getItem('editorsql_schema') ?? '',
-        query: localStorage.getItem('editorsql_query') ?? '',
+        query: localStorage.getItem('editorsql_query_tabs') ?? '[]',
         savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
         dataDump: dump,
       }
@@ -171,8 +171,9 @@ export default function Home() {
     }
 
     // Reset to default
+    const defaultTabs = JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }])
     localStorage.setItem('editorsql_schema', '-- Usá este panel para crear tablas (CREATE TABLE, INSERT, etc.)')
-    localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
+    localStorage.setItem('editorsql_query_tabs', defaultTabs)
     localStorage.setItem('editorsql_saved_queries', '[]')
     localStorage.setItem('editorsql_current_project', trimmed)
     localStorage.removeItem('editorsql_restore_flag')
@@ -203,7 +204,7 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel id="sidebar" defaultSize="16%" minSize="6%" className="bg-surface-card">
+                <Panel id="sidebar" defaultSize="18%" minSize="6%" className="bg-surface-card">
                   <TableBrowser />
                 </Panel>
                 <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
