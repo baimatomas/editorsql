@@ -115,26 +115,17 @@ export default function TableBrowser() {
   return (
     <div className="py-2">
       {/* Project switcher dropdown */}
-      <div className="relative flex items-center px-3 pb-2 mb-2 border-b border-[#3c3c3c]" ref={switcherRef}>
+      <div className="relative px-3 pb-2 mb-2 border-b border-[#3c3c3c]" ref={switcherRef}>
         <button
           onClick={() => setSwitcherOpen(!switcherOpen)}
-          className="flex items-center flex-1 text-xs text-green-400 font-semibold gap-1 hover:bg-[#37373d] px-1 py-1 rounded min-w-0"
+          className="flex items-center w-full text-xs text-green-400 font-semibold gap-1 hover:bg-[#37373d] px-1 py-1 rounded"
         >
           <svg className="w-3 h-3 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
             <path d="M2 1h6l2 2h4v11H2V1zm1 1v11h12V4H9.5L8 3H3z"/>
           </svg>
           <span className="flex-1 truncate text-left">{projectName || 'Sin proyecto'}</span>
-          <svg className="w-3 h-3 text-gray-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+          <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
             <path d="M4 6l4 4 4-4H4z"/>
-          </svg>
-        </button>
-        <button
-          onClick={refreshTables}
-          className="ml-1 p-1 rounded text-gray-400 hover:text-white hover:bg-[#37373d] transition-colors flex-shrink-0"
-          title="Refrescar esquemas"
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 2a6 6 0 0 0-5.3 8.7l1.2-.7A4.5 4.5 0 0 1 8 3.5V1l4 3-4 3V4.5A3.5 3.5 0 0 0 4.5 8a3.5 3.5 0 0 0 .3 1.5l-1.2.7A5 5 0 0 1 3 8a5 5 0 0 1 5-5V2zm0 12a6 6 0 0 0 5.3-8.7l-1.2.7A4.5 4.5 0 0 1 8 12.5V15l-4-3 4-3v2.5A3.5 3.5 0 0 0 11.5 8a3.5 3.5 0 0 0-.3-1.5l1.2-.7A5 5 0 0 1 13 8a5 5 0 0 1-5 5v1z"/>
           </svg>
         </button>
 
@@ -216,15 +207,26 @@ export default function TableBrowser() {
           return (
             <div key={s.schema_name} className="mb-1">
               {/* Schema header */}
-              <button
-                onClick={() => toggle(schemaKey)}
-                className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-[#37373d] font-medium"
-              >
-                <span className="text-[10px] mr-1.5 w-2 text-gray-500">
-                  {isSchemaOpen ? '▼' : '▶'}
-                </span>
-                <span className="text-purple-400">Schema: {s.schema_name}</span>
-              </button>
+              <div className="flex items-center w-full text-xs text-gray-400 font-medium group">
+                <button
+                  onClick={() => toggle(schemaKey)}
+                  className="flex items-center flex-1 text-left px-3 py-1 hover:bg-[#37373d]"
+                >
+                  <span className="text-[10px] mr-1.5 w-2 text-gray-500">
+                    {isSchemaOpen ? '▼' : '▶'}
+                  </span>
+                  <span className="text-purple-400">Schema: {s.schema_name}</span>
+                </button>
+                <button
+                  onClick={refreshTables}
+                  className="p-1 mr-1 rounded text-gray-500 hover:text-white hover:bg-[#37373d] transition-colors opacity-0 group-hover:opacity-100"
+                  title="Refrescar esquemas"
+                >
+                  <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 2a6 6 0 0 0-5.3 8.7l1.2-.7A4.5 4.5 0 0 1 8 3.5V1l4 3-4 3V4.5A3.5 3.5 0 0 0 4.5 8a3.5 3.5 0 0 0 .3 1.5l-1.2.7A5 5 0 0 1 3 8a5 5 0 0 1 5-5V2zm0 12a6 6 0 0 0 5.3-8.7l-1.2.7A4.5 4.5 0 0 1 8 12.5V15l-4-3 4-3v2.5A3.5 3.5 0 0 0 11.5 8a3.5 3.5 0 0 0-.3-1.5l1.2-.7A5 5 0 0 1 13 8a5 5 0 0 1-5 5v1z"/>
+                  </svg>
+                </button>
+              </div>
 
               {isSchemaOpen && (
                 <div className="ml-3">
