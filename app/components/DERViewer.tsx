@@ -42,6 +42,8 @@ export default function DERViewer() {
   const [hiddenTables, setHiddenTables] = useState<Set<string>>(new Set())
   const [tablePickerOpen, setTablePickerOpen] = useState(false)
   const [hoveredEdge, setHoveredEdge] = useState<Edge | null>(null)
+  const [mousePos, setMousePos] = useState<Position | null>(null)
+  const [scale, setScale] = useState(1)
 
   const tables = useMemo<DiagramTable[]>(() => {
     return schemas.flatMap((schema) =>
@@ -102,16 +104,21 @@ export default function DERViewer() {
     }
   }
 
+  const getContentPoint = (e: ReactMouseEvent<SVGSVGElement | SVGGElement>): Position => {
+    const p = getPoint(e)
+    return { x: p.x / scale, y: p.y / scale }
+  }
+
   const startDrag = (e: ReactMouseEvent<SVGGElement>, key: string) => {
     const pos = layout.get(key)
     if (!pos) return
-    const point = getPoint(e)
+    const point = getContentPoint(e)
     setDragging({ key, offsetX: point.x - pos.x, offsetY: point.y - pos.y })
   }
 
   const moveDrag = (e: ReactMouseEvent<SVGSVGElement>) => {
     if (!dragging) return
-    const point = getPoint(e)
+    const point = getContentPoint(e)
     setPositions((prev) => ({
       ...prev,
       [dragging.key]: {
@@ -203,6 +210,21 @@ export default function DERViewer() {
             </div>
           )}
         </div>
+        <div className="flex items-center gap-1 mr-2">
+          <button
+            onClick={() => setScale((s) => Math.max(0.25, +(s - 0.1).toFixed(2)))}
+            className="px-2 py-0.5 text-xs rounded border border-[#3c3c3c] text-gray-300 hover:text-white hover:bg-[#37373d] leading-none"
+          >
+            −
+          </button>
+          <span className="text-xs text-gray-400 w-8 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <button
+            onClick={() => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)))}
+            className="px-2 py-0.5 text-xs rounded border border-[#3c3c3c] text-gray-300 hover:text-white hover:bg-[#37373d] leading-none"
+          >
+            +
+          </button>
+        </div>
         <button
           onClick={refreshTables}
           className="px-3 py-0.5 text-xs bg-[#0e639c] hover:bg-[#1177bb] text-white rounded font-medium"
@@ -219,8 +241,8 @@ export default function DERViewer() {
         ) : (
           <svg
             ref={svgRef}
-            width={width}
-            height={height}
+            width={width * scale}
+            height={height * scale}
             className="min-w-full min-h-full select-none"
             onMouseMove={moveDrag}
             onMouseUp={() => setDragging(null)}
@@ -235,83 +257,95 @@ export default function DERViewer() {
               </marker>
             </defs>
 
-            {edges.map((edge) => {
-              const path = edgePath(edge)
-              const active = hoveredEdge?.key === edge.key
-              const fromName = layout.get(edge.from)?.table.name ?? edge.from
-              const toName = layout.get(edge.to)?.table.name ?? edge.to
-              return (
-                <g key={edge.key} onMouseEnter={() => setHoveredEdge(edge)} onMouseLeave={() => setHoveredEdge(null)}>
-                  <path d={path.d} fill="none" stroke="transparent" strokeWidth="14" />
-                  <path
-                    d={path.d}
-                    fill="none"
-                    stroke={active ? '#facc15' : '#7c3aed'}
-                    strokeWidth={active ? 3 : 1.5}
-                    markerEnd={active ? 'url(#arrow-active)' : 'url(#arrow)'}
-                    opacity={active ? 1 : 0.75}
-                  />
-                  {active && (
-                    <g>
-                      <rect x={path.labelX - 90} y={path.labelY - 18} width="180" height="22" rx="4" fill="#111827" stroke="#facc15" />
-                      <text x={path.labelX} y={path.labelY - 3} fill="#fde68a" fontSize="10" textAnchor="middle">
-                        {fromName}.{edge.column} → {toName}.{edge.targetColumn}
+            <g transform={`scale(${scale})`}>
+              {edges.map((edge) => {
+                const path = edgePath(edge)
+                const active = hoveredEdge?.key === edge.key
+                return (
+                  <g key={edge.key}
+                    onMouseEnter={(e) => { setHoveredEdge(edge); setMousePos(getPoint(e)) }}
+                    onMouseMove={(e) => setMousePos(getPoint(e))}
+                    onMouseLeave={() => { setHoveredEdge(null); setMousePos(null) }}
+                  >
+                    <path d={path.d} fill="none" stroke="transparent" strokeWidth="14" />
+                    <path
+                      d={path.d}
+                      fill="none"
+                      stroke={active ? '#facc15' : '#7c3aed'}
+                      strokeWidth={active ? 3 : 1.5}
+                      markerEnd={active ? 'url(#arrow-active)' : 'url(#arrow)'}
+                      opacity={active ? 1 : 0.75}
+                    />
+                  </g>
+                )
+              })}
+
+              {Array.from(layout.values()).map(({ x, y, height: boxHeight, table }) => {
+                const highlighted = isHighlightedTable(table.key)
+                return (
+                  <g key={table.key}>
+                    <rect
+                      x={x}
+                      y={y}
+                      width={BOX_WIDTH}
+                      height={boxHeight}
+                      rx="6"
+                      fill="#252526"
+                      stroke={highlighted ? '#facc15' : '#3c3c3c'}
+                      strokeWidth={highlighted ? 2.5 : 1}
+                    />
+                    <g onMouseDown={(e) => startDrag(e, table.key)} className="cursor-move">
+                      <rect x={x} y={y} width={BOX_WIDTH} height={HEADER_HEIGHT} rx="6" fill={highlighted ? '#7c3aed' : '#0e639c'} />
+                      <text x={x + 12} y={y + 20} fill="#fff" fontSize="12" fontWeight="600" pointerEvents="none">
+                        {table.name}
+                      </text>
+                      <text x={x + BOX_WIDTH - 12} y={y + 20} fill="#bfdbfe" fontSize="10" textAnchor="end" pointerEvents="none">
+                        {table.schema}
                       </text>
                     </g>
-                  )}
-                </g>
-              )
-            })}
 
-            {Array.from(layout.values()).map(({ x, y, height: boxHeight, table }) => {
-              const highlighted = isHighlightedTable(table.key)
-              return (
-                <g key={table.key}>
-                  <rect
-                    x={x}
-                    y={y}
-                    width={BOX_WIDTH}
-                    height={boxHeight}
-                    rx="6"
-                    fill="#252526"
-                    stroke={highlighted ? '#facc15' : '#3c3c3c'}
-                    strokeWidth={highlighted ? 2.5 : 1}
-                  />
-                  <g onMouseDown={(e) => startDrag(e, table.key)} className="cursor-move">
-                    <rect x={x} y={y} width={BOX_WIDTH} height={HEADER_HEIGHT} rx="6" fill={highlighted ? '#7c3aed' : '#0e639c'} />
-                    <text x={x + 12} y={y + 20} fill="#fff" fontSize="12" fontWeight="600" pointerEvents="none">
-                      {table.name}
-                    </text>
-                    <text x={x + BOX_WIDTH - 12} y={y + 20} fill="#bfdbfe" fontSize="10" textAnchor="end" pointerEvents="none">
-                      {table.schema}
-                    </text>
+                    {table.columns.map((column, index) => {
+                      const isFk = (table.foreignKeys ?? []).some((fk) => fk.column_name === column.column_name)
+                      const highlightedColumn = isHighlightedColumn(table.key, column.column_name)
+                      const rowY = y + HEADER_HEIGHT + index * ROW_HEIGHT
+                      return (
+                        <g key={column.column_name}>
+                          <rect
+                            x={x}
+                            y={rowY}
+                            width={BOX_WIDTH}
+                            height={ROW_HEIGHT}
+                            fill={highlightedColumn ? '#3b2f13' : index % 2 === 0 ? '#1f1f1f' : '#252526'}
+                          />
+                          <text x={x + 10} y={rowY + 16} fill={highlightedColumn ? '#fde68a' : column.is_primary_key ? '#facc15' : isFk ? '#c4b5fd' : '#d4d4d4'} fontSize="11" fontWeight={column.is_primary_key || highlightedColumn ? 700 : 400}>
+                            {column.is_primary_key ? 'PK ' : isFk ? 'FK ' : ''}{column.column_name}
+                          </text>
+                          <text x={x + BOX_WIDTH - 10} y={rowY + 16} fill={highlightedColumn ? '#fbbf24' : '#6b7280'} fontSize="10" textAnchor="end">
+                            {column.data_type}
+                          </text>
+                        </g>
+                      )
+                    })}
                   </g>
+                )
+              })}
+            </g>
 
-                  {table.columns.map((column, index) => {
-                    const isFk = (table.foreignKeys ?? []).some((fk) => fk.column_name === column.column_name)
-                    const highlightedColumn = isHighlightedColumn(table.key, column.column_name)
-                    const rowY = y + HEADER_HEIGHT + index * ROW_HEIGHT
-                    return (
-                      <g key={column.column_name}>
-                        <rect
-                          x={x}
-                          y={rowY}
-                          width={BOX_WIDTH}
-                          height={ROW_HEIGHT}
-                          fill={highlightedColumn ? '#3b2f13' : index % 2 === 0 ? '#1f1f1f' : '#252526'}
-                        />
-                        <text x={x + 10} y={rowY + 16} fill={highlightedColumn ? '#fde68a' : column.is_primary_key ? '#facc15' : isFk ? '#c4b5fd' : '#d4d4d4'} fontSize="11" fontWeight={column.is_primary_key || highlightedColumn ? 700 : 400}>
-                          {column.is_primary_key ? 'PK ' : isFk ? 'FK ' : ''}{column.column_name}
-                        </text>
-                        <text x={x + BOX_WIDTH - 10} y={rowY + 16} fill={highlightedColumn ? '#fbbf24' : '#6b7280'} fontSize="10" textAnchor="end">
-                          {column.data_type}
-                        </text>
-                      </g>
-                    )
-                  })}
+            {hoveredEdge && mousePos && (() => {
+              const edge = hoveredEdge
+              const fromName = layout.get(edge.from)?.table.name ?? edge.from
+              const toName = layout.get(edge.to)?.table.name ?? edge.to
+              const text = `${fromName}.${edge.column} → ${toName}.${edge.targetColumn}`
+              const tw = text.length * 6 + 20
+              return (
+                <g>
+                  <rect x={mousePos.x + 12} y={mousePos.y - 24} width={tw} height="22" rx="4" fill="#111827" stroke="#facc15" />
+                  <text x={mousePos.x + 12 + tw / 2} y={mousePos.y - 8} fill="#fde68a" fontSize="10" textAnchor="middle">
+                    {text}
+                  </text>
                 </g>
               )
-            })}
+            })()}
           </svg>
         )}
       </div>
