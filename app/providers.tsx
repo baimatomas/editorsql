@@ -342,6 +342,8 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
         localStorage.setItem('editorsql_saved_queries', '[]')
         location.reload()
+      } else {
+        refreshTables()
       }
       return
     }
