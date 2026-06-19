@@ -165,7 +165,7 @@ export default function Home() {
         <header className="bg-[#007acc] text-white flex-shrink-0">
           <div className="flex items-center pl-0.5 pr-4 py-1 gap-2">
             <div className="w-[16%] min-w-[100px] flex items-center flex-shrink-0 overflow-hidden">
-              <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain" />
+              <img src="/logo-unr-blanco.png" alt="UNR" className="w-[130px] h-8 object-contain -ml-2.5" />
             </div>
             <span className="text-sm font-semibold text-nowrap">Simulador PostgreSQL diseñado por la asignatura de Base de Datos</span>
             <div className="flex items-center gap-2 ml-auto">
