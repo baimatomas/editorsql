@@ -112,14 +112,14 @@ export default function QueryEditor() {
   return (
     <div className="flex flex-col h-full">
       {/* Tabs bar + Ejecutar */}
-      <div className="flex items-stretch bg-surface-elevated overflow-x-auto h-8 gap-1.5">
+      <div className="flex items-stretch bg-surface-elevated overflow-x-auto h-9 gap-2">
         {queryTabs.map((tab) => (
           <div
             key={tab.id}
-            className={`group flex items-center gap-1 cursor-pointer text-xs select-none ${
+            className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${
               tab.id === activeTabId
-                ? 'bg-surface-card text-white rounded-t-lg border border-surface-border border-b-0 relative z-10'
-                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-lg border border-surface-border'
+                ? 'bg-surface-card text-white rounded-t-xl border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40'
+                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-xl border border-surface-border'
             }`}
             onClick={() => setActiveTabId(tab.id)}
             onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
@@ -140,15 +140,19 @@ export default function QueryEditor() {
             )}
             <button
               onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id) }}
-              className="text-gray-500 hover:text-gray-300 hover:bg-white/10 rounded-sm p-0.5 mr-1.5"
+              className={`rounded-full p-0.5 mr-1.5 transition-all duration-150 ${
+                tab.id === activeTabId
+                  ? 'text-gray-400 hover:text-white hover:bg-white/15'
+                  : 'opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 hover:bg-white/10'
+              }`}
             >
-              <X size={10} />
+              <X size={11} />
             </button>
           </div>
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-surface-hover rounded-t-lg text-sm font-bold leading-none"
+          className="flex items-center justify-center w-7 h-7 self-center text-gray-500 hover:text-white hover:bg-surface-hover rounded-full text-sm font-bold leading-none transition-all duration-150"
           title="Nueva pestaña"
         >+</button>
         <div className="flex-1" />
