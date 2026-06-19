@@ -53,7 +53,7 @@ export default function TableBrowser() {
       const data: ProjectData = {
         name: cur,
         schema: localStorage.getItem('editorsql_schema') ?? '',
-        query: localStorage.getItem('editorsql_query') ?? '',
+        query: localStorage.getItem('editorsql_query_tabs') ?? '[]',
         savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
         dataDump: dump,
       }
@@ -67,7 +67,7 @@ export default function TableBrowser() {
         localStorage.setItem('editorsql_load_default', name)
         localStorage.setItem('editorsql_current_project', name)
         localStorage.setItem('editorsql_schema', `-- Proyecto: ${name}\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)`)
-        localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
+        localStorage.setItem('editorsql_query_tabs', JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }]))
         localStorage.setItem('editorsql_saved_queries', '[]')
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
@@ -80,7 +80,7 @@ export default function TableBrowser() {
       const data = getSessionProjectData(name)
       if (!data) return
       localStorage.setItem('editorsql_schema', data.schema)
-      localStorage.setItem('editorsql_query', data.query)
+      localStorage.setItem('editorsql_query_tabs', data.query)
       localStorage.setItem('editorsql_saved_queries', data.savedQueries ?? '[]')
       if (data.dataDump) {
         localStorage.setItem('editorsql_restore_data', data.dataDump)

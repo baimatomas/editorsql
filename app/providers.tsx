@@ -469,6 +469,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
     }
     setQueryTabs((prev) => [...prev, newTab])
     setActiveTabId(id)
+    setDirty()
     return id
   }, [])
 
@@ -478,6 +479,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const idx = prev.findIndex((t) => t.id === id)
       if (idx === -1) return prev
       const next = prev.filter((t) => t.id !== id)
+      setDirty()
       if (next.length === 0) {
         const defaultTab: QueryTab = {
           id: crypto.randomUUID(),
@@ -495,12 +497,13 @@ export function DBProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const renameQueryTab = useCallback((id: string, name: string) => {
-    setQueryTabs((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)))
-  }, [])
-
   const setQueryTabSQL = useCallback((id: string, sql: string) => {
     setQueryTabs((prev) => prev.map((t) => (t.id === id ? { ...t, sql } : t)))
+    setDirty()
+  }, [])
+
+  const renameQueryTab = useCallback((id: string, name: string) => {
+    setQueryTabs((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)))
     setDirty()
   }, [])
 

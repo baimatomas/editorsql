@@ -132,7 +132,7 @@ export async function promptSaveIfDirty(getDump: () => Promise<string>): Promise
   const data: ProjectData = {
     name: trimmed,
     schema: localStorage.getItem('editorsql_schema') ?? '',
-    query: localStorage.getItem('editorsql_query') ?? '',
+      query: localStorage.getItem('editorsql_query_tabs') ?? '[]',
     savedQueries: localStorage.getItem('editorsql_saved_queries') ?? '[]',
     dataDump: dump,
   }
