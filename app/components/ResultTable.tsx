@@ -28,7 +28,7 @@ export default function ResultTable() {
   if (queryResult.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-xs text-gray-500">
-        La consulta no devolvió resultados
+        La consulta se ejecutó correctamente sin resultados para mostrar
       </div>
     )
   }

@@ -284,17 +284,30 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const trimmed = sql.trim()
       if (!trimmed) return
 
+      const noComments = trimmed
+        .replace(/--.*$/gm, '')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .trim()
+      const firstWord = noComments.split(/\s+/)[0]?.toUpperCase()
+      const isQuery = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE'].includes(firstWord)
+
       setLoading(true)
       try {
-        const result = await db.query(trimmed)
-        setQueryResult(result.rows as unknown[])
+        if (isQuery) {
+          const result = await db.query(trimmed)
+          setQueryResult(result.rows as unknown[])
+        } else {
+          await db.exec(trimmed)
+          setQueryResult([])
+          await refreshTables()
+        }
         setLoading(false)
       } catch (e) {
         setQueryError((e as Error).message)
         setLoading(false)
       }
     },
-    [db]
+    [db, refreshTables]
   )
 
   const saveQuery = useCallback((name: string, sql: string) => {
