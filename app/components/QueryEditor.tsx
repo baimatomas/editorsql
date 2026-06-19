@@ -5,7 +5,6 @@ import Editor, { type OnMount } from '@monaco-editor/react'
 import { Play, X } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
-import Toolbar from '@/app/components/ui/Toolbar'
 import Button from '@/app/components/ui/Button'
 import Badge from '@/app/components/ui/Badge'
 
@@ -33,7 +32,6 @@ export default function QueryEditor() {
   useEffect(() => { schemasRef.current = schemas }, [schemas])
   useEffect(() => { runRef.current = runQuery }, [runQuery])
 
-  // Focus rename input when renaming starts
   useEffect(() => {
     if (renamingId && renameInputRef.current) {
       renameInputRef.current.focus()
@@ -71,6 +69,29 @@ export default function QueryEditor() {
 
   const handleRun = () => { runRef.current(currentSqlRef.current) }
 
+  const handleCloseTab = async (tabId: string) => {
+    const tab = queryTabs.find(t => t.id === tabId)
+    if (!tab || !tab.sql.trim()) {
+      closeQueryTab(tabId)
+      return
+    }
+    const { default: Swal } = await import('sweetalert2')
+    const result = await Swal.fire({
+      title: '¿Cerrar pestaña?',
+      text: `Se perderá el contenido de "${tab.name}".`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Cerrar',
+      cancelButtonText: 'Cancelar',
+      reverseButtons: true,
+      background: '#2d2d2d',
+      color: '#d4d4d4',
+      confirmButtonColor: '#0e639c',
+      cancelButtonColor: '#6c6c6c',
+    })
+    if (result.isConfirmed) closeQueryTab(tabId)
+  }
+
   const handleDoubleClick = (tabId: string, currentName: string) => {
     setRenamingId(tabId)
     setRenameValue(currentName)
@@ -88,19 +109,17 @@ export default function QueryEditor() {
     if (e.key === 'Escape') setRenamingId(null)
   }
 
-  // Tab bar height: h-8
-
   return (
     <div className="flex flex-col h-full">
-      {/* Tabs bar */}
-      <div className="flex items-center gap-px bg-surface-card border-b border-surface-border overflow-x-auto">
+      {/* Tabs bar + Ejecutar */}
+      <div className="flex items-stretch bg-surface-elevated border-b border-surface-border overflow-x-auto h-8">
         {queryTabs.map((tab) => (
           <div
             key={tab.id}
-            className={`group flex items-center min-w-0 cursor-pointer border-b-2 transition-colors duration-100 ${
+            className={`group flex items-center gap-1 cursor-pointer text-xs select-none ${
               tab.id === activeTabId
-                ? 'border-institutional-400 bg-institutional-700/40 text-white'
-                : 'border-transparent text-gray-500 hover:text-gray-300'
+                ? 'bg-surface-card text-white rounded-t-md border border-surface-border border-b-0 relative z-10 mb-[-1px]'
+                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-md border border-transparent hover:border-surface-border mb-[-1px]'
             }`}
             onClick={() => setActiveTabId(tab.id)}
             onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
@@ -117,11 +136,11 @@ export default function QueryEditor() {
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
-              <span className="text-xs px-2 py-1.5 truncate max-w-[120px]">{tab.name}</span>
+              <span className="px-3 py-1.5 truncate max-w-[120px]">{tab.name}</span>
             )}
             <button
-              onClick={(e) => { e.stopPropagation(); closeQueryTab(tab.id) }}
-              className="mr-1 text-gray-500 hover:text-gray-300 hover:bg-white/10 rounded-sm p-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id) }}
+              className="text-gray-500 hover:text-gray-300 hover:bg-white/10 rounded-sm p-0.5 mr-1.5"
             >
               <X size={10} />
             </button>
@@ -129,25 +148,17 @@ export default function QueryEditor() {
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center justify-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-white/10 transition-colors flex-shrink-0"
+          className="flex items-center px-2 py-1.5 text-gray-500 hover:text-gray-300 hover:bg-surface-hover rounded-t-md text-sm font-bold leading-none mb-[-1px]"
           title="Nueva pestaña"
-        >
-          <span className="text-sm font-bold leading-none">+</span>
-        </button>
-      </div>
-
-      {/* Toolbar */}
-      <Toolbar>
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-          Query SQL
-        </span>
-        <div className="flex items-center gap-2 ml-auto">
+        >+</button>
+        <div className="flex-1 mb-[-1px]" />
+        <div className="flex items-center px-2 mb-[-1px]">
           <Button variant="primary" onClick={handleRun} disabled={!ready || !currentSqlRef.current?.trim() || loading}>
             <Play size={13} />
             {loading ? 'Ejecutando...' : 'Ejecutar'}
           </Button>
         </div>
-      </Toolbar>
+      </div>
 
       {/* Editor */}
       <div className="flex-1 min-h-0">

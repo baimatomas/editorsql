@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Database, Table2, Eye, FunctionSquare, FileText, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, Square, FolderKanban } from 'lucide-react'
+import { Database, Table2, Eye, FunctionSquare, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, Square, FolderKanban } from 'lucide-react'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
 import Badge from '@/app/components/ui/Badge'
 import {
@@ -11,7 +11,7 @@ import {
 } from '@/app/lib/projectFiles'
 
 export default function TableBrowser() {
-  const { schemas, ready, savedQueries, addQueryTab, deleteQuery, getDump, refreshTables } = useDB()
+  const { schemas, ready, getDump, refreshTables } = useDB()
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [projectName, setProjectName] = useState<string | null>(null)
   const [switcherOpen, setSwitcherOpen] = useState(false)
@@ -314,43 +314,6 @@ export default function TableBrowser() {
         })
       }
 
-      <div className="border-t border-surface-border mb-2 mt-2" />
-
-      {/* Saved Queries */}
-      <div>
-        <button
-          onClick={() => toggle('saved')}
-          className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-surface-hover transition-colors duration-100"
-        >
-          {expanded.has('saved') ? <ChevronDown size={10} className="mr-1.5 w-2 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 w-2 flex-shrink-0" />}
-          <FileText size={12} className="mr-1.5 text-institutional-400 flex-shrink-0" />
-          <span className="text-institutional-300 font-medium">Queries guardadas</span>
-          {savedQueries.length > 0 && (
-            <span className="ml-1 text-gray-600">({savedQueries.length})</span>
-          )}
-        </button>
-        {expanded.has('saved') && (
-          <div className="animate-fade-in">
-            {savedQueries.length === 0 && (
-              <div className="ml-5 pl-3 py-1 text-[10px] text-gray-600">
-                Aún no guardaste consultas
-              </div>
-            )}
-            {savedQueries.map((q) => (
-              <div key={q.id} className="group flex items-center ml-5 pl-3 pr-2 py-0.5 hover:bg-surface-hover cursor-pointer transition-colors duration-100" onClick={() => addQueryTab(q.name, q.sql)}>
-                <FileText size={12} className="text-gray-600 flex-shrink-0" />
-                <span className="ml-1.5 text-xs text-gray-300 flex-1 truncate">{q.name}</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); deleteQuery(q.id) }}
-                  className="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 p-0.5 transition-opacity duration-100"
-                >
-                  <Trash2 size={10} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

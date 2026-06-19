@@ -204,7 +204,7 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel id="sidebar" defaultSize="18%" minSize="6%" className="bg-surface-card">
+                <Panel id="sidebar" defaultSize="17%" minSize="6%" className="bg-surface-card">
                   <TableBrowser />
                 </Panel>
                 <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
