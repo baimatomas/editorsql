@@ -35,6 +35,7 @@ export function saveSessionProject(name: string, data: ProjectData): void {
 export function removeSessionProject(name: string): void {
   try {
     localStorage.removeItem(SESSION_PREFIX + name)
+    localStorage.removeItem('editorsql_project_' + name)
     const list = getSessionProjects().filter(n => n !== name)
     localStorage.setItem(SESSION_LIST, JSON.stringify(list))
   } catch { /* ignore */ }
