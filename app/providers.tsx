@@ -4,16 +4,25 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { PGlite } from '@electric-sql/pglite'
 import { setDirty } from '@/app/lib/projectFiles'
 
-interface ColumnInfo {
+export interface ColumnInfo {
   column_name: string
   data_type: string
   is_nullable: string
   column_default: string | null
+  is_primary_key?: boolean
 }
 
-interface ObjectInfo {
+export interface ForeignKeyInfo {
+  column_name: string
+  foreign_table_schema: string
+  foreign_table_name: string
+  foreign_column_name: string
+}
+
+export interface ObjectInfo {
   name: string
   columns: ColumnInfo[]
+  foreignKeys?: ForeignKeyInfo[]
 }
 
 interface FuncInfo {
@@ -21,7 +30,7 @@ interface FuncInfo {
   return_type: string | null
 }
 
-interface SchemaInfo {
+export interface SchemaInfo {
   schema_name: string
   tables: ObjectInfo[]
   views: ObjectInfo[]
@@ -122,6 +131,62 @@ export function DBProvider({ children }: { children: ReactNode }) {
         table_type: string
       }>
 
+      let pkRows: Array<{ table_schema: string; table_name: string; column_name: string }> = []
+      try {
+        const pkResult = await db.query(`
+          SELECT tc.table_schema, tc.table_name, kcu.column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+          WHERE tc.constraint_type = 'PRIMARY KEY'
+            AND tc.table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+          ORDER BY tc.table_schema, tc.table_name, kcu.ordinal_position
+        `)
+        pkRows = pkResult.rows as typeof pkRows
+      } catch { /* ignore */ }
+
+      let fkRows: Array<{
+        table_schema: string
+        table_name: string
+        column_name: string
+        foreign_table_schema: string
+        foreign_table_name: string
+        foreign_column_name: string
+      }> = []
+      try {
+        const fkResult = await db.query(`
+          SELECT tc.table_schema, tc.table_name, kcu.column_name,
+                 ccu.table_schema AS foreign_table_schema,
+                 ccu.table_name AS foreign_table_name,
+                 ccu.column_name AS foreign_column_name
+          FROM information_schema.table_constraints tc
+          JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_name = kcu.constraint_name
+           AND tc.table_schema = kcu.table_schema
+          JOIN information_schema.constraint_column_usage ccu
+            ON ccu.constraint_name = tc.constraint_name
+           AND ccu.constraint_schema = tc.constraint_schema
+          WHERE tc.constraint_type = 'FOREIGN KEY'
+            AND tc.table_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
+          ORDER BY tc.table_schema, tc.table_name, kcu.ordinal_position
+        `)
+        fkRows = fkResult.rows as typeof fkRows
+      } catch { /* ignore */ }
+
+      const pkSet = new Set(pkRows.map(r => `${r.table_schema}.${r.table_name}.${r.column_name}`))
+      const fkMap = new Map<string, ForeignKeyInfo[]>()
+      for (const fk of fkRows) {
+        const key = `${fk.table_schema}.${fk.table_name}`
+        if (!fkMap.has(key)) fkMap.set(key, [])
+        fkMap.get(key)!.push({
+          column_name: fk.column_name,
+          foreign_table_schema: fk.foreign_table_schema,
+          foreign_table_name: fk.foreign_table_name,
+          foreign_column_name: fk.foreign_column_name,
+        })
+      }
+
       const schemaMap = new Map<string, {
         tables: Map<string, ColumnInfo[]>
         views: Map<string, ColumnInfo[]>
@@ -139,6 +204,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
           data_type: row.data_type,
           is_nullable: row.is_nullable,
           column_default: row.column_default,
+          is_primary_key: pkSet.has(`${row.table_schema}.${row.table_name}.${row.column_name}`),
         })
       }
 
@@ -155,7 +221,11 @@ export function DBProvider({ children }: { children: ReactNode }) {
 
       const result: SchemaInfo[] = Array.from(schemaMap.entries()).map(([schema_name, data]) => ({
         schema_name,
-        tables: Array.from(data.tables.entries()).map(([name, columns]) => ({ name, columns })),
+        tables: Array.from(data.tables.entries()).map(([name, columns]) => ({
+          name,
+          columns,
+          foreignKeys: fkMap.get(`${schema_name}.${name}`) ?? [],
+        })),
         views: Array.from(data.views.entries()).map(([name, columns]) => ({ name, columns })),
         functions: funcRows
           .filter(r => r.specific_schema === schema_name)

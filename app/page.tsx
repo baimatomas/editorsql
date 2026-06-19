@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
-import SchemaEditor from '@/app/components/SchemaEditor'
+import DERViewer from '@/app/components/DERViewer'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
 import ResultTable from '@/app/components/ResultTable'
@@ -18,7 +18,7 @@ type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
 
 const LABELS: Record<PanelKey, string> = {
   sidebar: 'Tablas',
-  schema: 'Schema',
+  schema: 'DER',
   query: 'Query',
   results: 'Resultados',
 }
@@ -264,16 +264,16 @@ export default function Home() {
                   <Panel id="editors" defaultSize="65%" minSize="10%">
                     {visible.schema && visible.query ? (
                       <Group orientation="horizontal">
-                        <Panel id="schema" defaultSize="50%" minSize="10%">
-                          <SchemaEditor />
-                        </Panel>
-                        <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
                         <Panel id="query" defaultSize="50%" minSize="10%">
                           <QueryEditor />
                         </Panel>
+                        <Separator className="w-[3px] bg-[#3c3c3c] hover:bg-[#007acc] transition-colors cursor-col-resize" />
+                        <Panel id="schema" defaultSize="50%" minSize="10%">
+                          <DERViewer />
+                        </Panel>
                       </Group>
                     ) : visible.schema ? (
-                      <SchemaEditor />
+                      <DERViewer />
                     ) : (
                       <QueryEditor />
                     )}
