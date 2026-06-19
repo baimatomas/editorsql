@@ -211,6 +211,10 @@ export function DBProvider({ children }: { children: ReactNode }) {
           .map(r => ({ name: r.routine_name, return_type: r.data_type })),
       }))
 
+      if (!result.some(s => s.schema_name === 'public')) {
+        result.push({ schema_name: 'public', tables: [], views: [], functions: [] })
+      }
+
       setSchemas(result)
     } catch (e) {
       console.error('refreshTables error:', e)

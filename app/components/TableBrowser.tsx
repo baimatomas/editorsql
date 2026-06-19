@@ -110,7 +110,7 @@ export default function TableBrowser() {
     )
   }
 
-  const hasAnyObj = schemas.some(s => s.tables.length > 0 || s.views.length > 0 || s.functions.length > 0)
+  const hasAnyObj = schemas.length > 0
 
   return (
     <div className="py-2">
@@ -202,7 +202,6 @@ export default function TableBrowser() {
           const totalTables = s.tables.length
           const totalViews = s.views.length
           const totalFuncs = s.functions.length
-          if (totalTables === 0 && totalViews === 0 && totalFuncs === 0) return null
 
           return (
             <div key={s.schema_name} className="mb-1">
