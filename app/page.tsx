@@ -10,7 +10,7 @@ import ResultTable from '@/app/components/ResultTable'
 import {
   saveProjectFile, openProjectFile,
   saveSessionProject, getSessionProjects,
-  clearDirty, migrateOldProjects,
+  clearDirty, migrateOldProjects, isDirty,
   type ProjectData,
 } from '@/app/lib/projectFiles'
 
@@ -27,13 +27,42 @@ export default function Home() {
   const { getDump } = useDB()
   const [visible, setVisible] = useState<Record<PanelKey, boolean>>({
     sidebar: true,
-    schema: true,
+    schema: false,
     query: true,
     results: true,
   })
 
   useEffect(() => {
     migrateOldProjects()
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'F5') {
+        e.preventDefault()
+        if (isDirty()) {
+          import('sweetalert2').then(({ default: Swal }) => {
+            Swal.fire({
+              title: '¿Recargar?',
+              text: 'Los cambios no guardados se perderán.',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: 'Recargar',
+              cancelButtonText: 'Cancelar',
+              reverseButtons: true,
+              background: '#2d2d2d',
+              color: '#d4d4d4',
+              confirmButtonColor: '#0e639c',
+              cancelButtonColor: '#6c6c6c',
+            }).then((r) => { if (r.isConfirmed) location.reload() })
+          })
+        } else {
+          location.reload()
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
   }, [])
 
   const toggle = (key: PanelKey) =>
@@ -149,7 +178,7 @@ export default function Home() {
 
     // Reset to default
     localStorage.setItem('editorsql_schema', DEFAULT_SCHEMA)
-    localStorage.setItem('editorsql_query', '-- Solo se permiten consultas SELECT en este panel\nSELECT ')
+    localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
     localStorage.setItem('editorsql_saved_queries', '[]')
     localStorage.setItem('editorsql_current_project', trimmed)
     localStorage.removeItem('editorsql_restore_flag')

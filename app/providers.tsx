@@ -324,18 +324,6 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const trimmed = sql.trim()
       if (!trimmed) return
 
-      const noComments = trimmed
-        .replace(/--.*$/gm, '')
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .trim()
-      const firstWord = noComments.split(/\s+/)[0]?.toUpperCase()
-      const allowed = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE']
-
-      if (!allowed.includes(firstWord)) {
-        setQueryError('Este panel solo permite consultas SELECT. Usá el panel Schema para modificar la base de datos.')
-        return
-      }
-
       setLoading(true)
       try {
         const result = await db.query(trimmed)

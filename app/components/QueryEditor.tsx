@@ -9,7 +9,7 @@ import { setDirty } from '@/app/lib/projectFiles'
 const LS_QUERY = 'editorsql_query'
 
 export default function QueryEditor() {
-  const [sql, setSql] = useState('-- Solo se permiten consultas SELECT en este panel\nSELECT ')
+  const [sql, setSql] = useState('-- Ejecutá las consultas con Ctrl + Enter\n')
   const sqlRef = useRef(sql)
   const loadedRef = useRef(false)
   const { runQuery, queryError, ready, loading, queryTemplate, saveQuery, schemas } = useDB()
