@@ -149,12 +149,10 @@ export function DBProvider({ children }: { children: ReactNode }) {
     init()
   }, [])
 
-  const refreshTables = useCallback(async (pglite?: PGlite) => {
-    const _db = pglite ?? db
-    if (!_db) return
+  const refreshTables = useCallback(async () => {
+    if (!db) return
     try {
-      // Get tables and views with column info and type
-      const objectsResult = await _db.query(`
+      const objectsResult = await db.query(`
         SELECT c.table_schema, c.table_name, c.column_name, c.data_type,
                c.is_nullable, c.column_default, t.table_type
         FROM information_schema.columns c
@@ -173,7 +171,6 @@ export function DBProvider({ children }: { children: ReactNode }) {
         table_type: string
       }>
 
-      // Group by schema
       const schemaMap = new Map<string, {
         tables: Map<string, ColumnInfo[]>
         views: Map<string, ColumnInfo[]>
@@ -194,10 +191,9 @@ export function DBProvider({ children }: { children: ReactNode }) {
         })
       }
 
-      // Get functions
       let funcRows: Array<{ specific_schema: string; routine_name: string; data_type: string | null }> = []
       try {
-        const funcResult = await _db.query(`
+        const funcResult = await db.query(`
           SELECT specific_schema, routine_name, data_type
           FROM information_schema.routines
           WHERE specific_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
@@ -206,7 +202,6 @@ export function DBProvider({ children }: { children: ReactNode }) {
         funcRows = funcResult.rows as typeof funcRows
       } catch { /* routines table might not be available in some PGlite builds */ }
 
-      // Build schema array
       const result: SchemaInfo[] = Array.from(schemaMap.entries()).map(([schema_name, data]) => ({
         schema_name,
         tables: Array.from(data.tables.entries()).map(([name, columns]) => ({ name, columns })),
@@ -217,7 +212,8 @@ export function DBProvider({ children }: { children: ReactNode }) {
       }))
 
       setSchemas(result)
-    } catch {
+    } catch (e) {
+      console.error('refreshTables error:', e)
       setSchemas([])
     }
   }, [db])
@@ -310,7 +306,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       setQueryError(null)
       try {
         await db.exec(sql)
-        await refreshTables(db)
+        await refreshTables()
       } catch (e) {
         setSchemaError((e as Error).message)
       }
@@ -384,7 +380,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
           await db.exec(sql)
           localStorage.removeItem('editorsql_load_default')
         }
-        await refreshTables(db)
+        await refreshTables()
       } catch (e) {
         setSchemaError('Error al restaurar proyecto: ' + (e as Error).message)
         localStorage.removeItem('editorsql_restore_flag')
