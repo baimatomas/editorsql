@@ -14,7 +14,6 @@ const TABS: { key: PanelKey; label: string }[] = [
 
 export default function Header({
   visible,
-  activeTab,
   onToggle,
   onNewProject,
   onSaveProject,
@@ -22,7 +21,6 @@ export default function Header({
   onOpenProject,
 }: {
   visible: Record<PanelKey, boolean>
-  activeTab: PanelKey | null
   onToggle: (key: PanelKey) => void
   onNewProject: () => void
   onSaveProject: () => void
@@ -64,7 +62,7 @@ export default function Header({
           {TABS.map(({ key, label }) => (
             <Button
               key={key}
-              variant={activeTab === key ? 'tab-active' : 'tab'}
+              variant={visible[key] ? 'tab-active' : 'tab'}
               onClick={() => onToggle(key)}
             >
               {label}

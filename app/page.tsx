@@ -25,7 +25,6 @@ export default function Home() {
     query: true,
     results: true,
   })
-  const [activeTab, setActiveTab] = useState<PanelKey>('query')
 
   useEffect(() => {
     migrateOldProjects()
@@ -60,10 +59,8 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const toggle = (key: PanelKey) => {
-    setActiveTab(key)
+  const toggle = (key: PanelKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
-  }
 
   const swalBase = () => ({
     background: '#2d2d2d',
@@ -191,7 +188,6 @@ export default function Home() {
     <div className="h-screen flex flex-col bg-surface text-gray-200">
         <Header
           visible={visible}
-          activeTab={activeTab}
           onToggle={toggle}
           onNewProject={newProject}
           onSaveProject={saveProject}
