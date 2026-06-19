@@ -111,8 +111,6 @@ export default function TableBrowser() {
     )
   }
 
-  const hasAnyObj = schemas.length > 0
-
   return (
     <div className="py-2">
       {/* Project switcher dropdown */}
@@ -191,13 +189,7 @@ export default function TableBrowser() {
         )}
       </div>
 
-      {!hasAnyObj ? (
-        <div className="px-3 text-xs text-gray-500">
-          No hay objetos aún.<br />
-          Ejecutá un schema SQL arriba.
-        </div>
-      ) : (
-        schemas.map((s) => {
+      {schemas.map((s) => {
           const schemaKey = `schema:${s.schema_name}`
           const isSchemaOpen = expanded.has(schemaKey)
           const totalTables = s.tables.length
@@ -336,7 +328,7 @@ export default function TableBrowser() {
             </div>
           )
         })
-      )}
+      }
 
       <div className="border-t border-[#3c3c3c] mb-2 mt-2" />
 

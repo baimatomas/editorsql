@@ -324,11 +324,20 @@ export function DBProvider({ children }: { children: ReactNode }) {
     const defaultFlag = localStorage.getItem('editorsql_load_default')
 
     if (dumpFlag !== 'true' && !defaultFlag) {
-      const currentProject = localStorage.getItem('editorsql_current_project')
+      let currentProject = localStorage.getItem('editorsql_current_project')
+      // On first visit or when a default project doesn't have its SQL loaded (e.g. page reload), reload it
       if (!currentProject) {
         const hint = '-- Proyecto: northwind\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)'
         localStorage.setItem('editorsql_load_default', 'northwind')
         localStorage.setItem('editorsql_current_project', 'northwind')
+        localStorage.setItem('editorsql_schema', hint)
+        localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
+        localStorage.setItem('editorsql_saved_queries', '[]')
+        location.reload()
+      } else if (DEFAULT_PROJECTS.includes(currentProject)) {
+        // Returning to a default project — re-load its SQL
+        localStorage.setItem('editorsql_load_default', currentProject)
+        const hint = `-- Proyecto: ${currentProject}\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)`
         localStorage.setItem('editorsql_schema', hint)
         localStorage.setItem('editorsql_query', '-- Ejecutá las consultas con Ctrl + Enter\n')
         localStorage.setItem('editorsql_saved_queries', '[]')
