@@ -50,6 +50,7 @@ interface DBContextType {
   queryTemplate: string | null
   loadQuery: (id: string) => void
   getDump: () => Promise<string>
+  refreshTables: () => Promise<void>
 }
 
 export const DEFAULT_SCHEMA = `-- Tabla de estudiantes
@@ -148,10 +149,12 @@ export function DBProvider({ children }: { children: ReactNode }) {
     init()
   }, [])
 
-  const refreshTables = useCallback(async (pglite: PGlite) => {
+  const refreshTables = useCallback(async (pglite?: PGlite) => {
+    const _db = pglite ?? db
+    if (!_db) return
     try {
       // Get tables and views with column info and type
-      const objectsResult = await pglite.query(`
+      const objectsResult = await _db.query(`
         SELECT c.table_schema, c.table_name, c.column_name, c.data_type,
                c.is_nullable, c.column_default, t.table_type
         FROM information_schema.columns c
@@ -194,7 +197,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       // Get functions
       let funcRows: Array<{ specific_schema: string; routine_name: string; data_type: string | null }> = []
       try {
-        const funcResult = await pglite.query(`
+        const funcResult = await _db.query(`
           SELECT specific_schema, routine_name, data_type
           FROM information_schema.routines
           WHERE specific_schema NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
@@ -217,7 +220,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
     } catch {
       setSchemas([])
     }
-  }, [])
+  }, [db])
 
   const getDump = useCallback(async (): Promise<string> => {
     if (!db) return ''
@@ -400,7 +403,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         runSchema, runQuery,
         savedQueries, saveQuery, deleteQuery,
         queryTemplate, loadQuery,
-        getDump,
+        getDump, refreshTables,
       }}
     >
       {children}
