@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
-import { setDirty } from '@/app/lib/projectFiles'
+import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
 
 export interface ColumnInfo {
   column_name: string
@@ -532,7 +532,19 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('editorsql_saved_queries', '[]')
         location.reload()
       } else {
-        refreshTables()
+        // Restore user project data from session cache
+        const sessionData = getSessionProjectData(currentProject)
+        const doRestore = async () => {
+          if (sessionData?.dataDump) {
+            try {
+              await db.exec(sessionData.dataDump)
+            } catch (e) {
+              console.error('session restore error:', e)
+            }
+          }
+          await refreshTables()
+        }
+        doRestore()
       }
       return
     }
