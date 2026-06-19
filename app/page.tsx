@@ -183,6 +183,7 @@ export default function Home() {
     localStorage.setItem('editorsql_current_project', trimmed)
     localStorage.removeItem('editorsql_restore_flag')
     localStorage.removeItem('editorsql_restore_data')
+    localStorage.removeItem('editorsql_load_default')
     clearDirty()
     location.reload()
   }

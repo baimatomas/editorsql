@@ -271,7 +271,14 @@ export function DBProvider({ children }: { children: ReactNode }) {
       )
       const pkCols = (pkResult.rows as Array<{ column_name: string }>).map(r => r.column_name)
 
-      // Build CREATE TABLE
+      // Build CREATE TABLE with serial column sequence support
+      const serialCols = cols.filter(c => c.column_default?.includes('nextval('))
+      dump += `DROP TABLE IF EXISTS "${name}" CASCADE;\n`
+      for (const sc of serialCols) {
+        const m = sc.column_default!.match(/nextval\('([^']+)'/)
+        if (m) dump += `CREATE SEQUENCE IF NOT EXISTS ${m[1]};\n`
+      }
+
       const colDefs = cols.map(c => {
         let def = `"${c.column_name}" ${c.data_type}`
         if (c.is_nullable === 'NO') def += ' NOT NULL'
@@ -282,7 +289,6 @@ export function DBProvider({ children }: { children: ReactNode }) {
         colDefs.push(`PRIMARY KEY (${pkCols.map(c => `"${c}"`).join(', ')})`)
       }
 
-      dump += `DROP TABLE IF EXISTS "${name}" CASCADE;\n`
       dump += `CREATE TABLE "${name}" (\n  ${colDefs.join(',\n  ')}\n);\n`
 
       // Data
@@ -377,6 +383,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
           }
           localStorage.removeItem('editorsql_restore_flag')
           localStorage.removeItem('editorsql_restore_data')
+          localStorage.removeItem('editorsql_load_default')
         } else if (defaultFlag) {
           const res = await fetch(`/projects/${defaultFlag}.sql`)
           if (!res.ok) throw new Error(`No se pudo descargar ${defaultFlag}.sql`)
@@ -386,7 +393,19 @@ export function DBProvider({ children }: { children: ReactNode }) {
         }
         await refreshTables()
       } catch (e) {
+        console.error('restore error:', e)
         setSchemaError('Error al restaurar proyecto: ' + (e as Error).message)
+        import('sweetalert2').then(({ default: Swal }) => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al restaurar proyecto',
+            text: (e as Error).message,
+            confirmButtonText: 'OK',
+            background: '#2d2d2d',
+            color: '#d4d4d4',
+            confirmButtonColor: '#0e639c',
+          })
+        })
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
         localStorage.removeItem('editorsql_load_default')
