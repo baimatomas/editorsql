@@ -186,7 +186,7 @@ export default function Home() {
   const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
 
   return (
-    <div className="h-screen flex flex-col bg-surface text-txt-body">
+    <div className="h-screen flex flex-col panel-gradient text-txt-body">
         <Header
           visible={visible}
           onToggle={toggle}
@@ -214,14 +214,14 @@ export default function Home() {
             <Panel id="main" className="flex flex-col">
               {(visible.schema || visible.query) && (
                 <Group orientation="vertical" className="flex-1">
-                  <Panel id="editors" defaultSize="65%" minSize="10%">
+                  <Panel id="editors" defaultSize="65%" minSize="10%" className="panel-gradient">
                     {visible.schema && visible.query ? (
                       <Group orientation="horizontal">
                         <Panel id="query" defaultSize="50%" minSize="10%" className="panel-gradient">
                           <QueryEditor />
                         </Panel>
                         <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
-                        <Panel id="schema" defaultSize="50%" minSize="10%">
+                        <Panel id="schema" defaultSize="50%" minSize="10%" className="panel-gradient">
                           <DERViewer />
                         </Panel>
                       </Group>
@@ -234,7 +234,7 @@ export default function Home() {
                   {visible.results && (
                     <>
                       <Separator className="h-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-row-resize" />
-                      <Panel id="results" defaultSize="35%" minSize="10%">
+                      <Panel id="results" defaultSize="35%" minSize="10%" className="panel-gradient">
                         <ResultTable />
                       </Panel>
                     </>

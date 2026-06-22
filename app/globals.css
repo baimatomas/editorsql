@@ -26,6 +26,8 @@
     --error-bg: #fef2f2;
     --error-border: #fecaca;
     --error-text: #b91c1c;
+    --panel-from: #ffffff;
+    --panel-to: #e8edf5;
   }
 
   [data-theme="dark"] {
@@ -50,6 +52,8 @@
     --error-bg: rgba(127, 29, 29, 0.4);
     --error-border: #991b1b;
     --error-text: #fca5a5;
+    --panel-from: #1a1b23;
+    --panel-to: #0f1830;
   }
 }
 
@@ -64,7 +68,10 @@ svg, svg * {
 }
 
 .panel-gradient {
-  background: linear-gradient(180deg, var(--surface-card) 0%, var(--surface-default) 40%, #1e3a5f 100%);
+  background: linear-gradient(180deg, var(--panel-from) 0%, var(--panel-to) 100%);
+}
+.panel-gradient-light {
+  background: linear-gradient(180deg, var(--panel-from) 0%, var(--surface-card) 30%, var(--panel-to) 100%);
 }
 
 html {
