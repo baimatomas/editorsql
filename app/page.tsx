@@ -186,7 +186,7 @@ export default function Home() {
   const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
 
   return (
-    <div className="h-screen flex flex-col bg-surface text-gray-200">
+    <div className="h-screen flex flex-col bg-surface text-txt-body">
         <Header
           visible={visible}
           onToggle={toggle}
@@ -197,7 +197,7 @@ export default function Home() {
         />
 
         {!hasAny ? (
-          <div className="flex-1 flex items-center justify-center text-sm text-gray-500">
+          <div className="flex-1 flex items-center justify-center text-sm text-txt-dim">
             Todos los paneles están ocultos. Activá uno desde el header.
           </div>
         ) : (

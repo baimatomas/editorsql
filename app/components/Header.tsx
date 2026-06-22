@@ -1,6 +1,7 @@
 'use client'
 
-import { FilePlus, Save, SaveAll, FolderOpen } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { FilePlus, Save, SaveAll, FolderOpen, Sun, Moon } from 'lucide-react'
 import Button from '@/app/components/ui/Button'
 
 export type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
@@ -27,6 +28,22 @@ export default function Header({
   onSaveAsProject: () => void
   onOpenProject: () => void
 }) {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+
+  useEffect(() => {
+    const stored = localStorage.getItem('editorsql_theme') as 'dark' | 'light' | null
+    const t = stored === 'light' ? 'light' : 'dark'
+    setTheme(t)
+    document.documentElement.setAttribute('data-theme', t)
+  }, [])
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    localStorage.setItem('editorsql_theme', next)
+    document.documentElement.setAttribute('data-theme', next)
+  }
+
   return (
     <header className="bg-institutional-800 text-white flex-shrink-0 shadow-md z-10">
       <div className="flex items-center px-3 py-1 gap-2">
@@ -57,8 +74,19 @@ export default function Header({
           </span>
         </div>
 
+        {/* Theme toggle */}
+        <div className="flex items-center ml-auto">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-7 h-7 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-all duration-150"
+            title={theme === 'dark' ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
+        </div>
+
         {/* Tabs */}
-        <div className="flex items-center gap-0.5 ml-auto h-7">
+        <div className="flex items-center gap-0.5 ml-1 h-7">
           {TABS.map(({ key, label }) => (
             <Button
               key={key}

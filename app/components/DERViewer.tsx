@@ -172,7 +172,7 @@ export default function DERViewer() {
   return (
     <div className="flex flex-col h-full bg-surface">
       <Toolbar>
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-300 uppercase tracking-wider">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-txt-muted uppercase tracking-wider">
           <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
             <ellipse cx="16" cy="10" rx="10" ry="3.5" stroke="#818cf8" strokeWidth="2"/>
             <line x1="6" y1="10" x2="6" y2="22" stroke="#818cf8" strokeWidth="2"/>
@@ -201,7 +201,7 @@ export default function DERViewer() {
                   <button
                     key={table.key}
                     onClick={() => toggleTable(table.key)}
-                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left text-gray-300 hover:bg-surface-hover transition-colors duration-100"
+                    className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-left text-txt-muted hover:bg-surface-hover transition-colors duration-100"
                   >
                     <span className={isHidden ? 'text-gray-600' : 'text-institutional-400'}>{isHidden ? '◌' : '●'}</span>
                     <span className="flex-1 truncate">{table.name}</span>
@@ -229,7 +229,7 @@ export default function DERViewer() {
 
       <div className="flex-1 overflow-auto">
         {visibleTables.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-xs text-gray-500 bg-surface">
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-xs text-txt-dim bg-surface">
             <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
               <ellipse cx="16" cy="10" rx="10" ry="3.5" stroke="#4b5563" strokeWidth="1.5"/>
               <line x1="6" y1="10" x2="6" y2="22" stroke="#4b5563" strokeWidth="1.5"/>

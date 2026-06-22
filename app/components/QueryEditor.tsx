@@ -119,7 +119,7 @@ export default function QueryEditor() {
             className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${i > 0 ? '-ml-px' : ''} ${
               tab.id === activeTabId
                 ? 'bg-surface-card text-white rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
-                : 'text-gray-500 hover:text-gray-300 bg-surface-hover rounded-t-lg rounded-b-[14px] border border-surface-border border-b-0'
+                : 'text-txt-dim hover:text-txt-muted bg-surface-hover rounded-t-lg rounded-b-[14px] border border-surface-border border-b-0'
             }`}
             onClick={() => setActiveTabId(tab.id)}
             onDoubleClick={() => handleDoubleClick(tab.id, tab.name)}
@@ -143,7 +143,7 @@ export default function QueryEditor() {
               className={`rounded-full p-0.5 mr-1.5 transition-all duration-150 ${
                 tab.id === activeTabId
                   ? 'text-gray-400 hover:text-white hover:bg-white/15'
-                  : 'opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-300 hover:bg-white/10'
+                  : 'opacity-0 group-hover:opacity-100 text-txt-dim hover:text-txt-muted hover:bg-white/10'
               }`}
             >
               <X size={11} />
@@ -152,7 +152,7 @@ export default function QueryEditor() {
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center justify-center w-7 text-gray-500 hover:text-white hover:bg-surface-hover rounded-t-lg rounded-b-[14px] text-sm font-bold leading-none transition-all duration-150 border border-surface-border border-b-0"
+          className="flex items-center justify-center w-7 text-txt-dim hover:text-white hover:bg-surface-hover rounded-t-lg rounded-b-[14px] text-sm font-bold leading-none transition-all duration-150 border border-surface-border border-b-0"
           title="Nueva pestaña"
         >+</button>
         <div className="flex-1" />
@@ -195,7 +195,7 @@ export default function QueryEditor() {
       )}
 
       {/* Status bar */}
-      <div className="flex items-center gap-3 px-3 py-0.5 bg-surface-card border-t border-surface-border text-[10px] text-gray-500 flex-shrink-0">
+      <div className="flex items-center gap-3 px-3 py-0.5 bg-surface-card border-t border-surface-border text-[10px] text-txt-dim flex-shrink-0">
         <Badge variant="default">SQL</Badge>
         <span>Ln {cursorLine}, Col {cursorCol}</span>
         <span>Spaces: 2</span>

@@ -133,7 +133,7 @@ export default function TableBrowser() {
             {DEFAULT_PROJECTS.map((name) => (
               <div
                 key={name}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-surface-hover cursor-pointer transition-colors duration-100"
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer transition-colors duration-100"
                 onClick={() => switchToProject(name)}
               >
                 <FolderKanban size={14} className="text-institutional-400 flex-shrink-0" />
@@ -157,7 +157,7 @@ export default function TableBrowser() {
               sessionProjects.map((name) => (
                 <div
                   key={name}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
+                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
                   onClick={() => switchToProject(name)}
                 >
                   <FolderOpen size={14} className="text-gray-500 flex-shrink-0" />
@@ -200,7 +200,7 @@ export default function TableBrowser() {
                 </button>
                 <button
                   onClick={refreshTables}
-                  className="p-1 mr-1 rounded text-gray-500 hover:text-white hover:bg-surface-hover transition-colors opacity-0 group-hover:opacity-100"
+                  className="p-1 mr-1 rounded text-txt-dim hover:text-white hover:bg-surface-hover transition-colors opacity-0 group-hover:opacity-100"
                   title="Refrescar esquemas"
                 >
                   <RefreshCw size={12} />
@@ -225,7 +225,7 @@ export default function TableBrowser() {
                               className={`flex items-center w-full text-left px-3 py-1 text-xs transition-colors duration-100 border-l-2 ${
                                 isSelected
                                   ? 'border-institutional-500 bg-surface-hover/40 text-institutional-200'
-                                  : 'border-transparent text-gray-300 hover:bg-surface-hover hover:border-gray-600'
+                                  : 'border-transparent text-txt-muted hover:bg-surface-hover hover:border-gray-600'
                               }`}
                             >
                               {expanded.has(tKey) ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
@@ -264,7 +264,7 @@ export default function TableBrowser() {
                           <div key={v.name}>
                             <button
                               onClick={() => toggle(vKey)}
-                              className="flex items-center w-full text-left px-3 py-1 text-xs text-gray-300 hover:bg-surface-hover hover:border-l-2 hover:border-emerald-600/50 transition-colors duration-100 border-l-2 border-transparent"
+                              className="flex items-center w-full text-left px-3 py-1 text-xs text-txt-muted hover:bg-surface-hover hover:border-l-2 hover:border-emerald-600/50 transition-colors duration-100 border-l-2 border-transparent"
                             >
                               {expanded.has(vKey) ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
                               <Eye size={12} className="mr-1.5 text-emerald-500 flex-shrink-0" />
@@ -296,7 +296,7 @@ export default function TableBrowser() {
                       {s.functions.map((f) => (
                         <div
                           key={f.name}
-                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-gray-300 hover:bg-surface-hover transition-colors duration-100"
+                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-txt-muted hover:bg-surface-hover transition-colors duration-100"
                         >
                           <FunctionSquare size={12} className="text-violet-500 flex-shrink-0" />
                           <span className="text-violet-400">{f.name}()</span>

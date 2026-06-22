@@ -126,7 +126,7 @@ export default function ResultTable() {
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-gray-500 bg-surface border-t border-surface-border flex-shrink-0">
+      <div className="flex items-center justify-between px-3 py-1 text-[10px] text-txt-dim bg-surface border-t border-surface-border flex-shrink-0">
         <span>{queryResult.length} fila(s)</span>
       </div>
     </div>

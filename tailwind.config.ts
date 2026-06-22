@@ -19,11 +19,16 @@ const config: Config = {
           950: '#070d17',
         },
         surface: {
-          DEFAULT: '#18181b',
-          card: '#1f1f23',
-          hover: '#27272a',
-          border: '#2d2d31',
-          elevated: '#25252a',
+          DEFAULT: 'var(--surface-default)',
+          card: 'var(--surface-card)',
+          hover: 'var(--surface-hover)',
+          border: 'var(--surface-border)',
+          elevated: 'var(--surface-elevated)',
+        },
+        txt: {
+          body: 'var(--txt-body)',
+          muted: 'var(--txt-muted)',
+          dim: 'var(--txt-dim)',
         },
       },
       animation: {
