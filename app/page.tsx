@@ -1,5 +1,6 @@
 'use client'
 
+import { Info } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { Group, Panel, Separator } from 'react-resizable-panels'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
@@ -17,6 +18,15 @@ import {
 
 type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
 
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-2">
+      <span className="text-txt-dim whitespace-nowrap">{label}</span>
+      <span className="text-txt-body text-right">{value}</span>
+    </div>
+  )
+}
+
 export default function Home() {
   const { getDump } = useDB()
   const [visible, setVisible] = useState<Record<PanelKey, boolean>>({
@@ -25,6 +35,7 @@ export default function Home() {
     query: true,
     results: true,
   })
+  const [infoOpen, setInfoOpen] = useState(false)
 
   useEffect(() => {
     migrateOldProjects()
@@ -248,6 +259,39 @@ export default function Home() {
             </Panel>
           </Group>
         )}
+        {/* Status bar */}
+        <div className="flex items-center h-5 px-2 bg-institutional-800/90 text-[10px] text-white/50 select-none flex-shrink-0 relative">
+          <button
+            className="flex items-center gap-1 hover:text-white transition-colors"
+            onClick={() => setInfoOpen((p) => !p)}
+            onBlur={() => setTimeout(() => setInfoOpen(false), 200)}
+          >
+            <Info size={11} />
+            <span className="hidden sm:inline">Entorno de Práctica SQL</span>
+          </button>
+          <div className="ml-auto flex items-center gap-2">
+            <span>PGlite</span>
+            <span className="text-white/30">|</span>
+            <span>v0.1.0</span>
+          </div>
+          {infoOpen && (
+            <div
+              className="absolute bottom-full left-2 mb-1 w-64 rounded-lg border border-surface-border bg-surface-card shadow-xl z-50 text-txt-body text-xs overflow-hidden"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <div className="px-3 py-2 border-b border-surface-border bg-institutional-800/10 font-semibold text-txt-body">
+                Entorno de Práctica SQL
+              </div>
+              <div className="p-3 space-y-1.5">
+                <Row label="Motor" value="PostgreSQL (PGlite – WebAssembly)" />
+                <Row label="Versión" value="0.1.0" />
+                <Row label="Desarrollo" value="Junio 2026" />
+                <Row label="Institución" value="FCEyE – UNR" />
+                <Row label="Asignatura" value="Base de Datos" />
+              </div>
+            </div>
+          )}
+        </div>
     </div>
   )
 }
