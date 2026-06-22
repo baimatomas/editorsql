@@ -12,9 +12,9 @@ export default function ResultTable() {
     return (
       <div className="flex flex-col h-full">
         <Toolbar>
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+          <span className="text-xs font-medium text-txt-dim uppercase tracking-wider">Resultados</span>
         </Toolbar>
-        <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-xs text-txt-dim">
           Ejecutando consulta...
         </div>
       </div>
@@ -29,9 +29,9 @@ export default function ResultTable() {
     return (
       <div className="flex flex-col h-full">
         <Toolbar>
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+          <span className="text-xs font-medium text-txt-dim uppercase tracking-wider">Resultados</span>
         </Toolbar>
-        <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-xs text-txt-dim">
           Ejecutá una consulta para ver resultados
         </div>
       </div>
@@ -42,12 +42,12 @@ export default function ResultTable() {
     return (
       <div className="flex flex-col h-full">
         <Toolbar>
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+          <span className="text-xs font-medium text-txt-dim uppercase tracking-wider">Resultados</span>
           {queryTime !== null && (
-            <span className="text-[10px] text-gray-600">{queryTime.toFixed(1)} ms</span>
+            <span className="text-[10px] text-txt-dim">{queryTime.toFixed(1)} ms</span>
           )}
         </Toolbar>
-        <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
+        <div className="flex-1 flex items-center justify-center text-xs text-txt-dim">
           La consulta se ejecutó correctamente sin resultados para mostrar
         </div>
       </div>
@@ -78,10 +78,10 @@ export default function ResultTable() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <Toolbar>
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Resultados</span>
+        <span className="text-xs font-medium text-txt-dim uppercase tracking-wider">Resultados</span>
         <div className="flex items-center gap-2">
           {queryTime !== null && (
-            <span className="text-[10px] text-gray-600">{queryTime.toFixed(1)} ms</span>
+            <span className="text-[10px] text-txt-dim">{queryTime.toFixed(1)} ms</span>
           )}
           <Button variant="ghost" onClick={exportCSV}>
             <Download size={12} />
@@ -96,7 +96,7 @@ export default function ResultTable() {
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-3 py-1.5 text-left text-gray-300 font-semibold border-b border-surface-border whitespace-nowrap"
+                  className="px-3 py-1.5 text-left text-txt-muted font-semibold border-b border-surface-border whitespace-nowrap"
                 >
                   {col}
                 </th>
@@ -112,10 +112,10 @@ export default function ResultTable() {
                 {columns.map((col) => (
                   <td
                     key={col}
-                    className="px-3 py-1 text-gray-300 border-b border-surface-border/40 whitespace-nowrap"
+                    className="px-3 py-1 text-txt-muted border-b border-surface-border/40 whitespace-nowrap"
                   >
                     {row[col] === null ? (
-                      <span className="text-gray-600 italic">NULL</span>
+                      <span className="text-txt-dim italic">NULL</span>
                     ) : (
                       String(row[col])
                     )}

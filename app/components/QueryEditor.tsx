@@ -67,6 +67,19 @@ export default function QueryEditor() {
     }
   }, [])
 
+  const [monacoTheme, setMonacoTheme] = useState<'vs-dark' | 'vs'>('vs-dark')
+
+  useEffect(() => {
+    const t = document.documentElement.getAttribute('data-theme')
+    setMonacoTheme(t === 'light' ? 'vs' : 'vs-dark')
+    const observer = new MutationObserver(() => {
+      const theme = document.documentElement.getAttribute('data-theme')
+      setMonacoTheme(theme === 'light' ? 'vs' : 'vs-dark')
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
+
   const handleRun = () => { runRef.current(currentSqlRef.current) }
 
   const handleCloseTab = async (tabId: string) => {
@@ -75,6 +88,7 @@ export default function QueryEditor() {
       closeQueryTab(tabId)
       return
     }
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light'
     const { default: Swal } = await import('sweetalert2')
     const result = await Swal.fire({
       title: '¿Cerrar pestaña?',
@@ -84,10 +98,10 @@ export default function QueryEditor() {
       confirmButtonText: 'Cerrar',
       cancelButtonText: 'Cancelar',
       reverseButtons: true,
-      background: '#2d2d2d',
-      color: '#d4d4d4',
+      background: isLight ? '#fff' : '#2d2d2d',
+      color: isLight ? '#1f2937' : '#d4d4d4',
       confirmButtonColor: '#0e639c',
-      cancelButtonColor: '#6c6c6c',
+      cancelButtonColor: isLight ? '#9ca3af' : '#6c6c6c',
     })
     if (result.isConfirmed) closeQueryTab(tabId)
   }
@@ -118,7 +132,7 @@ export default function QueryEditor() {
             key={tab.id}
             className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${i > 0 ? '-ml-px' : ''} ${
               tab.id === activeTabId
-                ? 'bg-surface-card text-white rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
+                ? 'bg-surface-card text-txt-body rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
                 : 'text-txt-dim hover:text-txt-muted bg-surface-hover rounded-t-lg rounded-b-[14px] border border-surface-border border-b-0'
             }`}
             onClick={() => setActiveTabId(tab.id)}
@@ -132,7 +146,7 @@ export default function QueryEditor() {
                 onChange={(e) => setRenameValue(e.target.value)}
                 onBlur={handleRenameSubmit}
                 onKeyDown={handleRenameKeyDown}
-                className="bg-surface-elevated text-white text-xs px-2 py-1 outline-none border border-institutional-400 rounded w-24"
+                className="bg-surface-elevated text-txt-body text-xs px-2 py-1 outline-none border border-institutional-400 rounded w-24"
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
@@ -142,8 +156,8 @@ export default function QueryEditor() {
               onClick={(e) => { e.stopPropagation(); handleCloseTab(tab.id) }}
               className={`rounded-full p-0.5 mr-1.5 transition-all duration-150 ${
                 tab.id === activeTabId
-                  ? 'text-gray-400 hover:text-white hover:bg-white/15'
-                  : 'opacity-0 group-hover:opacity-100 text-txt-dim hover:text-txt-muted hover:bg-white/10'
+                  ? 'text-txt-dim hover:text-txt-body hover:bg-black/10'
+                  : 'opacity-0 group-hover:opacity-100 text-txt-dim hover:text-txt-muted hover:bg-black/10'
               }`}
             >
               <X size={11} />
@@ -152,7 +166,7 @@ export default function QueryEditor() {
         ))}
         <button
           onClick={() => addQueryTab()}
-          className="flex items-center justify-center w-7 text-txt-dim hover:text-white hover:bg-surface-hover rounded-t-lg rounded-b-[14px] text-sm font-bold leading-none transition-all duration-150 border border-surface-border border-b-0"
+          className="flex items-center justify-center w-7 text-txt-dim hover:text-txt-body hover:bg-surface-hover rounded-t-lg rounded-b-[14px] text-sm font-bold leading-none transition-all duration-150 border border-surface-border border-b-0"
           title="Nueva pestaña"
         >+</button>
         <div className="flex-1" />
@@ -170,7 +184,7 @@ export default function QueryEditor() {
           key={activeTabId}
           height="100%"
           defaultLanguage="sql"
-          theme="vs-dark"
+          theme={monacoTheme}
           value={activeTab?.sql ?? ''}
           onChange={(val) => { if (activeTab) setQueryTabSQL(activeTab.id, val ?? '') }}
           onMount={handleEditorMount}
@@ -188,7 +202,7 @@ export default function QueryEditor() {
 
       {/* Error */}
       {queryError && (
-        <div className="px-3 py-1.5 bg-red-900/40 border-t border-red-800 text-red-300 text-xs font-mono flex-shrink-0 flex items-center gap-2">
+        <div className="px-3 py-1.5 text-xs font-mono flex-shrink-0 flex items-center gap-2" style={{ backgroundColor: 'var(--error-bg)', borderTop: '1px solid var(--error-border)', color: 'var(--error-text)' }}>
           <Badge variant="pk">Error</Badge>
           {queryError}
         </div>
@@ -202,7 +216,7 @@ export default function QueryEditor() {
         <span className={loading ? 'text-yellow-500 font-medium' : 'text-green-600'}>
           {loading ? 'Ejecutando...' : 'Listo'}
         </span>
-        <span className="ml-auto text-gray-600">UTF-8</span>
+        <span className="ml-auto text-txt-dim">UTF-8</span>
       </div>
     </div>
   )

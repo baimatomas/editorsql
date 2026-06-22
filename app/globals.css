@@ -24,6 +24,9 @@
     --svg-table-text: #1f2937;
     --svg-schema-text: #6b7280;
     --svg-grid-dot: #d1d5db;
+    --error-bg: #fef2f2;
+    --error-border: #fecaca;
+    --error-text: #b91c1c;
   }
 
   [data-theme="dark"] {
@@ -45,6 +48,9 @@
     --svg-table-text: #ffffff;
     --svg-schema-text: #6b7280;
     --svg-grid-dot: #2d2d31;
+    --error-bg: rgba(127, 29, 29, 0.4);
+    --error-border: #991b1b;
+    --error-text: #fca5a5;
   }
 }
 
