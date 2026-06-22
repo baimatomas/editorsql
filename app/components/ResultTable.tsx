@@ -113,6 +113,7 @@ export default function ResultTable() {
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr className="bg-surface-card sticky top-0 shadow-sm z-10">
+              <th className="px-2 py-1.5 text-right text-txt-dim font-mono text-[10px] border-b border-surface-border w-10 select-none">#</th>
               {columns.map((col) => (
                 <th
                   key={col}
@@ -138,6 +139,7 @@ export default function ResultTable() {
                 key={i}
                 className={`${i % 2 === 0 ? 'bg-surface' : 'bg-surface-card'} hover:bg-institutional-500/10 transition-all duration-150 cursor-default`}
               >
+                <td className="px-2 py-1 text-right text-txt-dim font-mono text-[10px] border-b border-surface-border/40 select-none">{currentPage * pageSize + i + 1}</td>
                 {columns.map((col) => (
                   <td
                     key={col}
