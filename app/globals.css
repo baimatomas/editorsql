@@ -63,6 +63,10 @@ svg, svg * {
   transition: fill 0.25s ease, stroke 0.25s ease;
 }
 
+.panel-gradient {
+  background: linear-gradient(180deg, var(--surface-card) 0%, var(--surface-default) 40%, #1e3a5f 100%);
+}
+
 html {
   transition: background-color 0.25s ease, color 0.25s ease;
 }

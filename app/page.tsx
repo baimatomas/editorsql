@@ -204,7 +204,7 @@ export default function Home() {
           <Group orientation="horizontal" className="flex-1">
             {visible.sidebar && (
               <>
-                <Panel id="sidebar" defaultSize="17%" minSize="6%" className="bg-surface-card">
+                <Panel id="sidebar" defaultSize="17%" minSize="6%" className="panel-gradient">
                   <TableBrowser />
                 </Panel>
                 <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
@@ -217,7 +217,7 @@ export default function Home() {
                   <Panel id="editors" defaultSize="65%" minSize="10%">
                     {visible.schema && visible.query ? (
                       <Group orientation="horizontal">
-                        <Panel id="query" defaultSize="50%" minSize="10%">
+                        <Panel id="query" defaultSize="50%" minSize="10%" className="panel-gradient">
                           <QueryEditor />
                         </Panel>
                         <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
