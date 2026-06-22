@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Database, Table2, Eye, FunctionSquare, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, Square, FolderKanban } from 'lucide-react'
+import { Database, Table2, Eye, FunctionSquare, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, FolderKanban, Hash, Calendar, FileText, ToggleLeft, HelpCircle } from 'lucide-react'
 import { useDB, DEFAULT_PROJECTS } from '@/app/providers'
 import Badge from '@/app/components/ui/Badge'
 import {
@@ -9,6 +9,15 @@ import {
   removeSessionProject, promptSaveIfDirty, clearDirty,
   type ProjectData,
 } from '@/app/lib/projectFiles'
+
+function typeIcon(type: string) {
+  const t = type.toLowerCase()
+  if (/^(int|smallint|bigint|tinyint|serial|decimal|numeric|real|float|double|money)/.test(t)) return Hash
+  if (/^(date|time|timestamp|interval)/.test(t)) return Calendar
+  if (/^(char|varchar|text|clob|nchar|nvarchar|ntext|json|xml)/.test(t)) return FileText
+  if (/^bool/.test(t)) return ToggleLeft
+  return HelpCircle
+}
 
 export default function TableBrowser() {
   const { schemas, ready, getDump, refreshTables } = useDB()
@@ -236,7 +245,7 @@ export default function TableBrowser() {
                               <div className="ml-5 pl-2 border-l border-surface-border animate-fade-in">
                                 {t.columns.map((c) => (
                                   <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px] hover:bg-surface-hover/50 transition-colors duration-75">
-                                    <Square size={9} className="text-gray-600 flex-shrink-0" />
+                                    {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
                                     <span className="text-gray-300">{c.column_name}</span>
                                     <Badge variant="type">{c.data_type}</Badge>
                                     {c.is_primary_key && <Badge variant="pk">PK</Badge>}
@@ -274,7 +283,7 @@ export default function TableBrowser() {
                               <div className="ml-5 pl-2 border-l border-surface-border animate-fade-in">
                                 {v.columns.map((c) => (
                                   <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px]">
-                                    <Square size={9} className="text-gray-600 flex-shrink-0" />
+                                    {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
                                     <span className="text-gray-300">{c.column_name}</span>
                                     <Badge variant="type">{c.data_type}</Badge>
                                   </div>
