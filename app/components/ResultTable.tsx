@@ -107,7 +107,7 @@ export default function ResultTable() {
             {(queryResult as Record<string, unknown>[]).map((row, i) => (
               <tr
                 key={i}
-                className={`${i % 2 === 0 ? 'bg-surface' : 'bg-surface-card'} hover:bg-institutional-900/20 hover:shadow-sm hover:shadow-institutional-500/5 transition-all duration-150 cursor-default`}
+                className={`${i % 2 === 0 ? 'bg-surface' : 'bg-surface-card'} hover:bg-institutional-500/10 transition-all duration-150 cursor-default`}
               >
                 {columns.map((col) => (
                   <td
