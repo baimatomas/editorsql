@@ -129,7 +129,7 @@ export default function TableBrowser() {
           onClick={() => setSwitcherOpen(!switcherOpen)}
           className="flex items-center w-full text-xs text-institutional-400 font-semibold gap-1.5 hover:bg-surface-hover px-1.5 py-1 rounded transition-colors duration-100"
         >
-          <Database size={14} className="flex-shrink-0 text-institutional-400" />
+          <FolderKanban size={14} className="flex-shrink-0 text-institutional-400" />
           <span className="flex-1 truncate text-left">{projectName || 'Sin proyecto'}</span>
           <ChevronDown size={12} className="text-gray-500 flex-shrink-0" />
         </button>
