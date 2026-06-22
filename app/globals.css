@@ -98,27 +98,4 @@ body {
   scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 
-/* Concave bottom corners for active tab */
-.tab-active-concave::before,
-.tab-active-concave::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  width: 14px;
-  height: 14px;
-  background: var(--surface-elevated);
-  pointer-events: none;
-  z-index: 1;
-}
-.tab-active-concave::before {
-  left: 0;
-  border-bottom-right-radius: 14px;
-  border-right: 1px solid var(--surface-border);
-  border-bottom: 1px solid var(--surface-border);
-}
-.tab-active-concave::after {
-  right: 0;
-  border-bottom-left-radius: 14px;
-  border-left: 1px solid var(--surface-border);
-  border-bottom: 1px solid var(--surface-border);
-}
+
