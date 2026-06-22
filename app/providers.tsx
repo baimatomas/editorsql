@@ -378,6 +378,32 @@ export function DBProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Foreign key constraints (después de todas las tablas, sin orden de dependencia)
+    const fkResult = await db.query(
+      `SELECT tc.table_name, kcu.column_name,
+              ccu.table_name AS foreign_table_name,
+              ccu.column_name AS foreign_column_name
+       FROM information_schema.table_constraints tc
+       JOIN information_schema.key_column_usage kcu
+         ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+       JOIN information_schema.constraint_column_usage ccu
+         ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+       WHERE tc.table_schema = 'public'
+         AND tc.constraint_type = 'FOREIGN KEY'
+       ORDER BY tc.table_name, kcu.ordinal_position`
+    )
+    const fkRows = fkResult.rows as Array<{
+      table_name: string
+      column_name: string
+      foreign_table_name: string
+      foreign_column_name: string
+    }>
+    for (const fk of fkRows) {
+      dump += `ALTER TABLE "${fk.table_name}" ADD FOREIGN KEY ("${fk.column_name}") REFERENCES "${fk.foreign_table_name}" ("${fk.foreign_column_name}");\n`
+    }
+
     return dump
   }, [db])
 
