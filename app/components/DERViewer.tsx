@@ -216,7 +216,7 @@ export default function DERViewer() {
           <Button variant="icon" onClick={() => setScale((s) => Math.max(0.25, +(s - 0.1).toFixed(2)))}>
             <ZoomOut size={14} />
           </Button>
-          <span className="text-xs text-gray-400 w-8 text-center tabular-nums">{Math.round(scale * 100)}%</span>
+          <span className="text-xs text-txt-dim w-8 text-center tabular-nums">{Math.round(scale * 100)}%</span>
           <Button variant="icon" onClick={() => setScale((s) => Math.min(2, +(s + 0.1).toFixed(2)))}>
             <ZoomIn size={14} />
           </Button>

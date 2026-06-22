@@ -198,7 +198,7 @@ export default function TableBrowser() {
           return (
             <div key={s.schema_name} className="mb-1">
               {/* Schema header */}
-              <div className="flex items-center w-full text-xs text-gray-400 font-medium group">
+              <div className="flex items-center w-full text-xs text-txt-muted font-medium group">
                 <button
                   onClick={() => toggle(schemaKey)}
                   className="flex items-center flex-1 text-left px-3 py-1 hover:bg-surface-hover transition-colors duration-100"
@@ -246,7 +246,7 @@ export default function TableBrowser() {
                                 {t.columns.map((c) => (
                                   <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px] hover:bg-surface-hover/50 transition-colors duration-75">
                                     {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
-                                    <span className="text-gray-300">{c.column_name}</span>
+                                    <span className="text-txt-muted">{c.column_name}</span>
                                     <Badge variant="type">{c.data_type}</Badge>
                                     {c.is_primary_key && <Badge variant="pk">PK</Badge>}
                                     {(t.foreignKeys ?? []).some((fk) => fk.column_name === c.column_name) && <Badge variant="fk">FK</Badge>}
@@ -284,7 +284,7 @@ export default function TableBrowser() {
                                 {v.columns.map((c) => (
                                   <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px]">
                                     {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
-                                    <span className="text-gray-300">{c.column_name}</span>
+                                    <span className="text-txt-muted">{c.column_name}</span>
                                     <Badge variant="type">{c.data_type}</Badge>
                                   </div>
                                 ))}
