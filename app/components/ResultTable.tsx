@@ -1,5 +1,6 @@
 'use client'
 
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Download } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import Toolbar from '@/app/components/ui/Toolbar'
@@ -56,6 +57,25 @@ export default function ResultTable() {
 
   const columns = Object.keys(queryResult[0] as Record<string, unknown>)
 
+  const [colWidths, setColWidths] = useState<Record<string, number>>({})
+  const dragRef = useRef<{ col: string; startX: number; startWidth: number } | null>(null)
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return
+      const diff = e.clientX - dragRef.current.startX
+      const w = Math.max(60, dragRef.current.startWidth + diff)
+      setColWidths(p => ({ ...p, [dragRef.current!.col]: w }))
+    }
+    const onMouseUp = () => { dragRef.current = null }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
   const exportCSV = () => {
     const header = columns.map((c) => `"${c}"`).join(',')
     const rows = (queryResult as Record<string, unknown>[]).map((row) =>
@@ -96,9 +116,18 @@ export default function ResultTable() {
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="px-3 py-1.5 text-left text-txt-muted font-semibold border-b border-surface-border whitespace-nowrap"
+                  className="px-3 py-1.5 text-left text-txt-muted font-semibold border-b border-surface-border whitespace-nowrap relative select-none"
+                  style={{ width: colWidths[col] ? `${colWidths[col]}px` : undefined }}
                 >
                   {col}
+                  <div
+                    className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-institutional-500/50 active:bg-institutional-400 transition-colors"
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      const th = (e.target as HTMLElement).closest('th')!
+                      dragRef.current = { col, startX: e.clientX, startWidth: th.offsetWidth }
+                    }}
+                  />
                 </th>
               ))}
             </tr>
@@ -113,6 +142,7 @@ export default function ResultTable() {
                   <td
                     key={col}
                     className="px-3 py-1 text-txt-muted border-b border-surface-border/40 whitespace-nowrap"
+                    style={{ width: colWidths[col] ? `${colWidths[col]}px` : undefined }}
                   >
                     {row[col] === null ? (
                       <span className="text-txt-dim italic">NULL</span>
