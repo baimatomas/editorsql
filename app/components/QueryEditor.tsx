@@ -132,7 +132,7 @@ export default function QueryEditor() {
             key={tab.id}
             className={`group flex items-center gap-1 cursor-pointer text-xs select-none transition-all duration-150 ${i > 0 ? '-ml-px' : ''} ${
               tab.id === activeTabId
-                ? 'bg-surface-card text-txt-body rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
+                ? 'tab-active-concave bg-surface-card text-txt-body rounded-t-lg border border-surface-border border-b-0 relative z-10 shadow-sm shadow-black/40 -mb-[1px]'
                 : 'text-txt-dim hover:text-txt-muted bg-surface-hover rounded-t-lg rounded-b-[14px] border border-surface-border border-b-0'
             }`}
             onClick={() => setActiveTabId(tab.id)}
