@@ -270,7 +270,7 @@ export default function Home() {
                 Entorno de Práctica SQL
               </div>
               <div className="p-3 space-y-1.5">
-                <Row label="Motor" value="PostgreSQL (PGlite – WebAssembly)" />
+                <Row label="Motor" value="PostgreSQL (PGlite)" />
                 <Row label="Versión" value="0.1.0" />
                 <Row label="Desarrollo" value="Junio 2026" />
                 <Row label="Institución" value="FCEyE – UNR" />
