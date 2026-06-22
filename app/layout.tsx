@@ -5,6 +5,7 @@ import { DBProvider } from './providers'
 export const metadata: Metadata = {
   title: 'EditorSQL - Práctica PostgreSQL',
   description: 'Práctica de SQL con PostgreSQL en el navegador',
+  icons: { icon: '/favicon.svg' },
 }
 
 export default function RootLayout({
