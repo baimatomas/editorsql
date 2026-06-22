@@ -17,6 +17,12 @@
     --scrollbar-track: #e5e7eb;
     --scrollbar-thumb: #9ca3af;
     --scrollbar-thumb-hover: #6b7280;
+    --svg-table-body: #ffffff;
+    --svg-table-header: #eef2ff;
+    --svg-table-header-highlight: #4338ca;
+    --svg-table-text: #1f2937;
+    --svg-schema-text: #6b7280;
+    --svg-grid-dot: #d1d5db;
   }
 
   [data-theme="dark"] {
@@ -32,16 +38,30 @@
     --scrollbar-track: #18181b;
     --scrollbar-thumb: #2d2d31;
     --scrollbar-thumb-hover: #3d3d42;
+    --svg-table-body: #1f1f23;
+    --svg-table-header: #252543;
+    --svg-table-header-highlight: #4338ca;
+    --svg-table-text: #ffffff;
+    --svg-schema-text: #6b7280;
+    --svg-grid-dot: #2d2d31;
   }
 }
 
-* {
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body {
+svg, svg * {
+  transition: fill 0.25s ease, stroke 0.25s ease;
+}
+
+html {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+body {
   height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -49,6 +69,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   color: var(--txt-body);
   background: var(--surface-default);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* Custom scrollbar */

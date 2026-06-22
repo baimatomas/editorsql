@@ -252,7 +252,7 @@ export default function DERViewer() {
             <defs>
               {/* Grid background */}
               <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                <circle cx="2" cy="2" r="1.5" fill="#2d2d31" opacity="0.5"/>
+                <circle cx="2" cy="2" r="1.5" fill="var(--svg-grid-dot)" opacity="0.5"/>
               </pattern>
 
               {/* Table drop shadow */}
@@ -322,16 +322,16 @@ export default function DERViewer() {
                       width={BOX_WIDTH}
                       height={boxHeight}
                       rx="8"
-                      fill="#1f1f23"
-                      stroke={highlighted ? '#818cf8' : '#2d2d31'}
+                      fill="var(--svg-table-body)"
+                      stroke={highlighted ? '#818cf8' : 'var(--svg-grid-dot)'}
                       strokeWidth={highlighted ? 2 : 1}
                     />
                     <g onMouseDown={(e) => startDrag(e, table.key)} className="cursor-move">
-                      <path d={headerPath} fill={highlighted ? '#4338ca' : '#252543'} />
-                      <text x={x + 12} y={y + 20} fill="#fff" fontSize="13" fontWeight="600" pointerEvents="none">
+                      <path d={headerPath} fill={highlighted ? 'var(--svg-table-header-highlight)' : 'var(--svg-table-header)'} />
+                      <text x={x + 12} y={y + 20} fill="var(--svg-table-text)" fontSize="13" fontWeight="600" pointerEvents="none">
                         {table.name}
                       </text>
-                      <text x={x + BOX_WIDTH - 12} y={y + 20} fill={highlighted ? '#c7d2fe' : '#6b7280'} fontSize="10" textAnchor="end" pointerEvents="none">
+                      <text x={x + BOX_WIDTH - 12} y={y + 20} fill={highlighted ? '#c7d2fe' : 'var(--svg-schema-text)'} fontSize="10" textAnchor="end" pointerEvents="none">
                         {table.schema}
                       </text>
                     </g>
