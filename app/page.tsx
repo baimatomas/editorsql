@@ -35,7 +35,6 @@ export default function Home() {
     query: true,
     results: true,
   })
-  const [infoOpen, setInfoOpen] = useState(false)
 
   useEffect(() => {
     migrateOldProjects()
@@ -261,24 +260,12 @@ export default function Home() {
         )}
         {/* Status bar */}
         <div className="flex items-center h-5 px-2 bg-institutional-800/90 text-[10px] text-white/50 select-none flex-shrink-0 relative">
-          <button
-            className="flex items-center gap-1 hover:text-white transition-colors"
-            onClick={() => setInfoOpen((p) => !p)}
-            onBlur={() => setTimeout(() => setInfoOpen(false), 200)}
-          >
-            <Info size={11} />
-            <span className="hidden sm:inline">Entorno de Práctica SQL</span>
-          </button>
-          <div className="ml-auto flex items-center gap-2">
-            <span>PGlite</span>
-            <span className="text-white/30">|</span>
-            <span>v0.1.0</span>
-          </div>
-          {infoOpen && (
-            <div
-              className="absolute bottom-full left-2 mb-1 w-64 rounded-lg border border-surface-border bg-surface-card shadow-xl z-50 text-txt-body text-xs overflow-hidden"
-              onMouseDown={(e) => e.preventDefault()}
-            >
+          <div className="group relative flex items-center">
+            <button className="flex items-center gap-1 hover:text-white transition-colors cursor-default">
+              <Info size={11} />
+              <span className="hidden sm:inline">Entorno de Práctica SQL</span>
+            </button>
+            <div className="absolute bottom-full left-0 mb-1 w-64 rounded-lg border border-surface-border bg-surface-card shadow-xl z-50 text-txt-body text-xs overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none">
               <div className="px-3 py-2 border-b border-surface-border bg-institutional-800/10 font-semibold text-txt-body">
                 Entorno de Práctica SQL
               </div>
@@ -290,7 +277,12 @@ export default function Home() {
                 <Row label="Asignatura" value="Base de Datos" />
               </div>
             </div>
-          )}
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <span>PGlite</span>
+            <span className="text-white/30">|</span>
+            <span>v0.1.0</span>
+          </div>
         </div>
     </div>
   )
