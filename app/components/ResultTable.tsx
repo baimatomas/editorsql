@@ -1,13 +1,13 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Download } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import Toolbar from '@/app/components/ui/Toolbar'
 import Button from '@/app/components/ui/Button'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export default function ResultTable() {
-  const { queryResult, queryError, queryTime, loading } = useDB()
+  const { queryResult, queryError, queryTime, loading, totalRowCount, currentPage, pageSize, setPage } = useDB()
 
   if (loading) {
     return (
@@ -157,7 +157,32 @@ export default function ResultTable() {
         </table>
       </div>
       <div className="flex items-center justify-between px-3 py-1 text-[10px] text-txt-dim bg-surface border-t border-surface-border flex-shrink-0">
-        <span>{queryResult.length} fila(s)</span>
+        <div className="flex items-center gap-3">
+          <span>{queryResult.length} fila(s)</span>
+          {totalRowCount > pageSize && (
+            <span className="text-txt-muted">
+              Pág. {currentPage + 1} · {(currentPage * pageSize) + 1}–{Math.min((currentPage + 1) * pageSize, totalRowCount)} de {totalRowCount.toLocaleString()}
+            </span>
+          )}
+        </div>
+        {totalRowCount > pageSize && (
+          <div className="flex items-center gap-1">
+            <button
+              className="p-1 rounded hover:bg-surface-hover disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              disabled={currentPage === 0 || loading}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              <ChevronLeft size={12} />
+            </button>
+            <button
+              className="p-1 rounded hover:bg-surface-hover disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              disabled={(currentPage + 1) * pageSize >= totalRowCount || loading}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

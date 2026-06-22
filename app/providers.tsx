@@ -72,6 +72,10 @@ interface DBContextType {
   setQueryTabSQL: (id: string, sql: string) => void
   getDump: () => Promise<string>
   refreshTables: () => Promise<void>
+  totalRowCount: number
+  currentPage: number
+  pageSize: number
+  setPage: (page: number) => void
 }
 
 export const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
@@ -94,6 +98,10 @@ export function DBProvider({ children }: { children: ReactNode }) {
   const [queryTime, setQueryTime] = useState<number | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const PAGE_SIZE = 1000
+  const [totalRowCount, setTotalRowCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState(0)
+  const execSqlRef = useRef('')
   const [savedQueries, setSavedQueries] = useState<SavedQuery[]>([])
   const [queryTabs, setQueryTabs] = useState<QueryTab[]>([])
   const [activeTabId, setActiveTabId] = useState<string>('')
@@ -429,6 +437,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       setQueryError(null)
       setQueryResult(null)
       setQueryTime(null)
+      setCurrentPage(0)
 
       const trimmed = sql.trim()
       if (!trimmed) return
@@ -444,9 +453,22 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const start = performance.now()
       try {
         if (isQuery) {
-          const result = await db.query(trimmed)
+          execSqlRef.current = trimmed
+
+          let total = 0
+          try {
+            const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${trimmed}) AS _p`)
+            total = Number((cnt.rows[0] as Record<string, unknown>).cnt)
+          } catch {
+            total = 0
+          }
+          setTotalRowCount(total)
+
+          const result = await db.query(`${trimmed} LIMIT ${PAGE_SIZE} OFFSET 0`)
           setQueryResult(result.rows as unknown[])
         } else {
+          execSqlRef.current = ''
+          setTotalRowCount(0)
           await db.exec(trimmed)
           setQueryResult([])
           await refreshTables()
@@ -461,6 +483,24 @@ export function DBProvider({ children }: { children: ReactNode }) {
     },
     [db, refreshTables]
   )
+
+  const setPage = useCallback(async (page: number) => {
+    if (!db || !execSqlRef.current) return
+    setQueryError(null)
+    setLoading(true)
+    const start = performance.now()
+    try {
+      const result = await db.query(`${execSqlRef.current} LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}`)
+      setQueryResult(result.rows as unknown[])
+      setCurrentPage(page)
+      setQueryTime(performance.now() - start)
+      setLoading(false)
+    } catch (e) {
+      setQueryTime(performance.now() - start)
+      setQueryError((e as Error).message)
+      setLoading(false)
+    }
+  }, [db])
 
   const saveQuery = useCallback((name: string, sql: string) => {
     setSavedQueries((prev) => [
@@ -627,6 +667,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         savedQueries, saveQuery, deleteQuery,
         queryTabs, activeTabId, addQueryTab, closeQueryTab, renameQueryTab, setActiveTabId, setQueryTabSQL,
         getDump, refreshTables,
+        totalRowCount, currentPage, pageSize: PAGE_SIZE, setPage,
       }}
     >
       {children}
