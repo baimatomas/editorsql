@@ -96,8 +96,8 @@ export default function DERViewer() {
     ).filter((edge) => visibleKeys.has(edge.from) && visibleKeys.has(edge.to))
   }, [visibleKeys, visibleTables])
 
-  const width = Math.max(900, ...Array.from(layout.values()).map(({ x }) => x + BOX_WIDTH + 80))
-  const height = Math.max(520, ...Array.from(layout.values()).map(({ y, height }) => y + height + 80))
+  const width = Math.max(1200, ...Array.from(layout.values()).map(({ x }) => x + BOX_WIDTH + 80))
+  const height = Math.max(800, ...Array.from(layout.values()).map(({ y, height }) => y + height + 80))
 
   const getPoint = (e: ReactMouseEvent<SVGSVGElement | SVGGElement>): Position => {
     const rect = svgRef.current?.getBoundingClientRect()
@@ -172,7 +172,15 @@ export default function DERViewer() {
   return (
     <div className="flex flex-col h-full bg-surface">
       <Toolbar>
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">DER</span>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-300 uppercase tracking-wider">
+          <svg width="14" height="14" viewBox="0 0 32 32" fill="none">
+            <ellipse cx="16" cy="10" rx="10" ry="3.5" stroke="#818cf8" strokeWidth="2"/>
+            <line x1="6" y1="10" x2="6" y2="22" stroke="#818cf8" strokeWidth="2"/>
+            <line x1="26" y1="10" x2="26" y2="22" stroke="#818cf8" strokeWidth="2"/>
+            <ellipse cx="16" cy="22" rx="10" ry="3.5" stroke="#818cf8" strokeWidth="2"/>
+          </svg>
+          Diagrama DER
+        </span>
         <div className="relative ml-auto">
           <Button variant="ghost" onClick={() => setTablePickerOpen((open) => !open)}>
             Tablas ({visibleTables.length}/{tables.length})
@@ -221,8 +229,15 @@ export default function DERViewer() {
 
       <div className="flex-1 overflow-auto">
         {visibleTables.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-xs text-gray-500 bg-surface">
-            No hay tablas visibles en el DER.
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-xs text-gray-500 bg-surface">
+            <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
+              <ellipse cx="16" cy="10" rx="10" ry="3.5" stroke="#4b5563" strokeWidth="1.5"/>
+              <line x1="6" y1="10" x2="6" y2="22" stroke="#4b5563" strokeWidth="1.5"/>
+              <line x1="26" y1="10" x2="26" y2="22" stroke="#4b5563" strokeWidth="1.5"/>
+              <ellipse cx="16" cy="22" rx="10" ry="3.5" stroke="#4b5563" strokeWidth="1.5"/>
+            </svg>
+            <span className="text-gray-600">No hay tablas visibles en el DER</span>
+            <span className="text-gray-700">Activá tablas desde el selector superior derecho</span>
           </div>
         ) : (
           <svg
@@ -235,6 +250,25 @@ export default function DERViewer() {
             onMouseLeave={() => setDragging(null)}
           >
             <defs>
+              {/* Grid background */}
+              <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.5" fill="#2d2d31" opacity="0.5"/>
+              </pattern>
+
+              {/* Table drop shadow */}
+              <filter id="shadow" x="-10%" y="-10%" width="130%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+              </filter>
+              <filter id="shadow-highlight" x="-10%" y="-10%" width="130%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#818cf8" flood-opacity="0.25"/>
+              </filter>
+
+              {/* Edge glow on hover */}
+              <filter id="edge-glow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+
               <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
                 <path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6" />
               </marker>
@@ -244,6 +278,7 @@ export default function DERViewer() {
             </defs>
 
             <g transform={`scale(${scale})`}>
+              <rect x="0" y="0" width={width} height={height} fill="url(#grid)" />
               {edges.map((edge) => {
                 const path = edgePath(edge)
                 const active = hoveredEdge?.key === edge.key
@@ -252,40 +287,51 @@ export default function DERViewer() {
                     onMouseEnter={(e) => { setHoveredEdge(edge); setMousePos(getPoint(e)) }}
                     onMouseMove={(e) => setMousePos(getPoint(e))}
                     onMouseLeave={() => { setHoveredEdge(null); setMousePos(null) }}
+                    filter={active ? 'url(#edge-glow)' : undefined}
                   >
-                    <path d={path.d} fill="none" stroke="transparent" strokeWidth="14" />
+                    <path d={path.d} fill="none" stroke="transparent" strokeWidth="16" />
                     <path
                       d={path.d}
                       fill="none"
-                      stroke={active ? '#818cf8' : '#8b5cf6'}
-                      strokeWidth={active ? 3 : 1.5}
+                      stroke={active ? '#a5b4fc' : '#6d6d80'}
+                      strokeWidth={active ? 2.5 : 1.5}
                       markerEnd={active ? 'url(#arrow-active)' : 'url(#arrow)'}
-                      opacity={active ? 1 : 0.75}
+                      opacity={active ? 1 : 0.55}
+                      style={{ transition: 'opacity 0.15s' }}
                     />
+                    {active && (
+                      <path d={path.d} fill="none" stroke="#818cf8" strokeWidth={1} opacity="0.4" markerEnd="url(#arrow-active)" />
+                    )}
                   </g>
                 )
               })}
 
               {Array.from(layout.values()).map(({ x, y, height: boxHeight, table }) => {
                 const highlighted = isHighlightedTable(table.key)
+                const headerPath = `M ${x} ${y + 8}
+                  Q ${x} ${y} ${x + 8} ${y}
+                  L ${x + BOX_WIDTH - 8} ${y}
+                  Q ${x + BOX_WIDTH} ${y} ${x + BOX_WIDTH} ${y + 8}
+                  L ${x + BOX_WIDTH} ${y + HEADER_HEIGHT}
+                  L ${x} ${y + HEADER_HEIGHT} Z`
                 return (
-                  <g key={table.key}>
+                  <g key={table.key} filter={highlighted ? 'url(#shadow-highlight)' : 'url(#shadow)'}>
                     <rect
                       x={x}
                       y={y}
                       width={BOX_WIDTH}
                       height={boxHeight}
-                      rx="6"
+                      rx="8"
                       fill="#1f1f23"
                       stroke={highlighted ? '#818cf8' : '#2d2d31'}
-                      strokeWidth={highlighted ? 2.5 : 1}
+                      strokeWidth={highlighted ? 2 : 1}
                     />
                     <g onMouseDown={(e) => startDrag(e, table.key)} className="cursor-move">
-                      <rect x={x} y={y} width={BOX_WIDTH} height={HEADER_HEIGHT} rx="6" fill={highlighted ? '#4338ca' : '#1e3a5f'} />
-                      <text x={x + 12} y={y + 20} fill="#fff" fontSize="12" fontWeight="600" pointerEvents="none">
+                      <path d={headerPath} fill={highlighted ? '#4338ca' : '#252543'} />
+                      <text x={x + 12} y={y + 20} fill="#fff" fontSize="13" fontWeight="600" pointerEvents="none">
                         {table.name}
                       </text>
-                      <text x={x + BOX_WIDTH - 12} y={y + 20} fill="#bfdbfe" fontSize="10" textAnchor="end" pointerEvents="none">
+                      <text x={x + BOX_WIDTH - 12} y={y + 20} fill={highlighted ? '#c7d2fe' : '#6b7280'} fontSize="10" textAnchor="end" pointerEvents="none">
                         {table.schema}
                       </text>
                     </g>
@@ -301,10 +347,31 @@ export default function DERViewer() {
                             y={rowY}
                             width={BOX_WIDTH}
                             height={ROW_HEIGHT}
-                            fill={highlightedColumn ? '#3b2f13' : index % 2 === 0 ? '#18181b' : '#1f1f23'}
+                            fill={highlightedColumn ? '#2a1f0e' : index % 2 === 0 ? 'transparent' : '#ffffff03'}
                           />
-                          <text x={x + 10} y={rowY + 16} fill={highlightedColumn ? '#fde68a' : column.is_primary_key ? '#eab308' : isFk ? '#a78bfa' : '#d4d4d4'} fontSize="11" fontWeight={column.is_primary_key || highlightedColumn ? 700 : 400}>
-                            {column.is_primary_key ? 'PK ' : isFk ? 'FK ' : ''}{column.column_name}
+                          {/* PK/FK badge */}
+                          {column.is_primary_key && (
+                            <circle cx={x + 14} cy={rowY + 12} r="5" fill="#ca8a04" opacity="0.8" />
+                          )}
+                          {isFk && !column.is_primary_key && (
+                            <circle cx={x + 14} cy={rowY + 12} r="5" fill="#7c3aed" opacity="0.6" />
+                          )}
+                          {/* PK/FK label */}
+                          {column.is_primary_key && (
+                            <text x={x + 22} y={rowY + 16} fill="#eab308" fontSize="9" fontWeight="700" fontFamily="monospace">PK</text>
+                          )}
+                          {isFk && !column.is_primary_key && (
+                            <text x={x + 22} y={rowY + 16} fill="#a78bfa" fontSize="9" fontWeight="700" fontFamily="monospace">FK</text>
+                          )}
+                          {/* Column name */}
+                          <text
+                            x={x + (column.is_primary_key || isFk ? 40 : 12)}
+                            y={rowY + 16}
+                            fill={highlightedColumn ? '#fde68a' : '#d4d4d4'}
+                            fontSize="11"
+                            fontWeight={column.is_primary_key || highlightedColumn ? 600 : 400}
+                          >
+                            {column.column_name}
                           </text>
                           <text x={x + BOX_WIDTH - 10} y={rowY + 16} fill={highlightedColumn ? '#fbbf24' : '#6b7280'} fontSize="10" textAnchor="end">
                             {column.data_type}
@@ -322,11 +389,11 @@ export default function DERViewer() {
               const fromName = layout.get(edge.from)?.table.name ?? edge.from
               const toName = layout.get(edge.to)?.table.name ?? edge.to
               const text = `${fromName}.${edge.column} → ${toName}.${edge.targetColumn}`
-              const tw = text.length * 6 + 20
+              const tw = text.length * 6.5 + 24
               return (
-                <g>
-                  <rect x={mousePos.x + 12} y={mousePos.y - 24} width={tw} height="22" rx="4" fill="#0f1d2f" stroke="#818cf8" />
-                  <text x={mousePos.x + 12 + tw / 2} y={mousePos.y - 8} fill="#a5b4fc" fontSize="10" textAnchor="middle">
+                <g filter="url(#shadow)">
+                  <rect x={mousePos.x + 14} y={mousePos.y - 28} width={tw} height="24" rx="6" fill="#0f1d2f" stroke="#818cf8" strokeWidth="1.5" />
+                  <text x={mousePos.x + 14 + tw / 2} y={mousePos.y - 11} fill="#c7d2fe" fontSize="11" textAnchor="middle" fontWeight="500">
                     {text}
                   </text>
                 </g>
