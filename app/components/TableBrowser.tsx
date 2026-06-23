@@ -516,7 +516,7 @@ export default function TableBrowser() {
                 <CtxItem onClick={() => appendToActiveTab(genTruncate(t))}>TRUNCATE</CtxItem>
                 <CtxItem onClick={() => appendToActiveTab(genDescribe(t))}>DESCRIBE</CtxItem>
                 <div className="border-t border-surface-border my-1" />
-                <CtxSubItem label="ALTER ›" open={ctxSub === 'alter'} onEnter={() => setCtxSub('alter')}>
+                <CtxSubItem label="ALTER ›" open={ctxSub?.startsWith('alter') ?? false} onEnter={() => setCtxSub('alter')}>
                   <CtxItem onClick={() => appendToActiveTab(genAlterAddCol(t))}>ADD COLUMN</CtxItem>
                   <CtxSubItem label="DROP COLUMN ›" open={ctxSub === 'alter-drop'} onEnter={() => setCtxSub('alter-drop')}>
                     {t.table.columns.map(c => (
