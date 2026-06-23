@@ -43,10 +43,16 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  await put('exercises.json', JSON.stringify(body, null, 2), {
+
+  // Merge incoming data with existing data (so projects don't get wiped)
+  const existing = await loadExercises()
+  const merged = { ...existing, ...body }
+
+  await put('exercises.json', JSON.stringify(merged, null, 2), {
     access: 'public',
     contentType: 'application/json',
     addRandomSuffix: false,
+    allowOverwrite: true,
   })
 
   return NextResponse.json({ ok: true })

@@ -52,7 +52,7 @@ export default function ExercisePanel() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
         body: JSON.stringify({ [project]: updated }),
       })
-      if (!res.ok) throw new Error('Error al guardar')
+      if (!res.ok) { const text = await res.text(); throw new Error(text) }
       setExercises(updated)
     } catch (e) {
       alert('Error al guardar: ' + (e as Error).message)
