@@ -25,7 +25,7 @@ async function loadIndex(): Promise<Record<string, { label: string }>> {
   try {
     const { blobs } = await list({ prefix: INDEX_BLOB, limit: 1 })
     if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url)
+    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {
@@ -99,7 +99,7 @@ export async function DELETE(request: Request, { params }: { params: { name: str
   try {
     const { blobs } = await list({ prefix: 'exercises.json', limit: 1 })
     if (blobs.length > 0) {
-      const res = await fetch(blobs[0].url)
+      const res = await fetch(blobs[0].url, { cache: 'no-cache' })
       if (res.ok) {
         const exercises: Record<string, unknown> = await res.json()
         delete exercises[name]

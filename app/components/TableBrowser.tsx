@@ -190,7 +190,9 @@ export default function TableBrowser() {
         headers: { Authorization: `Bearer ${adminToken}` },
       })
       if (!res.ok) { const text = await res.text(); throw new Error(text) }
-      setExampleProjects(prev => prev.filter(x => x.name !== p.name))
+      const refresh = await fetch('/api/projects')
+      const d = await refresh.json()
+      if (d?.projects) setExampleProjects(d.projects)
       Swal.fire(swalTheme({
         icon: 'success', title: 'Eliminado', text: `"${p.label}" se eliminó correctamente.`, timer: 2000, showConfirmButton: false,
       }))

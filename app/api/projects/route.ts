@@ -28,7 +28,7 @@ async function loadIndex(): Promise<Record<string, ProjectMeta>> {
   try {
     const { blobs } = await list({ prefix: INDEX_BLOB, limit: 1 })
     if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url)
+    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {
