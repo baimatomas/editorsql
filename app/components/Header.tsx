@@ -107,7 +107,7 @@ export default function Header({
         {/* Tabs */}
         <div className="flex items-center gap-0.5 ml-1 h-7">
           {TABS.map(({ key, label }) => {
-            const disabled = key === 'exercises' && !exercisesAvailable
+            const disabled = key === 'exercises' && !exercisesAvailable && !isAdmin
             return (
               <div key={key} className="relative group">
                 <Button
