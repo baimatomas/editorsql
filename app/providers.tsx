@@ -442,6 +442,9 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const trimmed = sql.trim()
       if (!trimmed) return
 
+      const cleaned = trimmed.replace(/;+\s*$/, '').trim()
+      const stripped = cleaned.replace(/\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i, '')
+
       const noComments = trimmed
         .replace(/--.*$/gm, '')
         .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -453,18 +456,18 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const start = performance.now()
       try {
         if (isQuery) {
-          execSqlRef.current = trimmed
+          execSqlRef.current = stripped
 
           let total = 0
           try {
-            const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${trimmed}) AS _p`)
+            const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${stripped}) AS _p`)
             total = Number((cnt.rows[0] as Record<string, unknown>).cnt)
           } catch {
             total = 0
           }
           setTotalRowCount(total)
 
-          const result = await db.query(`${trimmed} LIMIT ${PAGE_SIZE} OFFSET 0`)
+          const result = await db.query(`${stripped} LIMIT ${PAGE_SIZE} OFFSET 0`)
           setQueryResult(result.rows as unknown[])
         } else {
           execSqlRef.current = ''
