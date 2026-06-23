@@ -664,8 +664,8 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('editorsql_query_tabs', JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }]))
         localStorage.setItem('editorsql_saved_queries', '[]')
         location.reload()
-      } else if (DEFAULT_PROJECTS.includes(currentProject)) {
-        // Returning to a default project — re-load its SQL
+      } else if (DEFAULT_PROJECTS.includes(currentProject) || localStorage.getItem('editorsql_remote') === currentProject) {
+        // Returning to a default or remote project — re-load its SQL
         localStorage.setItem('editorsql_load_default', currentProject)
         const hint = `-- Proyecto: ${currentProject}\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)`
         localStorage.setItem('editorsql_schema', hint)
@@ -705,6 +705,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
           if (!res.ok) throw new Error(`No se pudo descargar ${defaultFlag}.sql`)
           const sql = await res.text()
           await db.exec(sql)
+          localStorage.setItem('editorsql_remote', defaultFlag)
           localStorage.removeItem('editorsql_load_default')
         }
         await refreshTables()
@@ -722,6 +723,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
         localStorage.removeItem('editorsql_load_default')
+        localStorage.removeItem('editorsql_remote')
       }
     }
 

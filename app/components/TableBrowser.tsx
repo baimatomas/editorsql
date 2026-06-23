@@ -114,6 +114,7 @@ export default function TableBrowser() {
         dataDump: dump,
       }
       saveSessionProject(cur, data)
+      localStorage.removeItem('editorsql_remote')
     }
 
     const isTargetExample = exampleProjects.some(p => p.name === name) || DEFAULT_PROJECTS.includes(name)
@@ -128,6 +129,7 @@ export default function TableBrowser() {
         localStorage.setItem('editorsql_saved_queries', '[]')
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
+        localStorage.setItem('editorsql_remote', name)
       } catch (e) {
         const { default: Swal } = await import('sweetalert2')
         await Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: 'Error al cargar proyecto: ' + (e as Error).message, confirmButtonText: 'OK' }))

@@ -44,8 +44,13 @@ export default function Home() {
   useEffect(() => {
     const project = localStorage.getItem('editorsql_current_project')
     const isAdmin = !!localStorage.getItem('editorsql_admin_token')
-    if (project && hasExercisesForDatabase(project)) setExercisesAvailable(true)
-    if (isAdmin) setExercisesAvailable(true)
+    if (isAdmin) { setExercisesAvailable(true); return }
+    if (project && hasExercisesForDatabase(project)) { setExercisesAvailable(true); return }
+    if (project) {
+      fetch('/api/exercises').then(r => r.json()).then(data => {
+        if (data[project]?.length > 0) setExercisesAvailable(true)
+      }).catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
