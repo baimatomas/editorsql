@@ -158,10 +158,9 @@ export default function ExercisePanel() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const projectName = file.name.replace(/\.json$/i, '')
       const text = await file.text()
       const json = JSON.parse(text)
-      const result = validateImportData(json, projectName)
+      const result = validateImportData(json, project)
       if (!result.valid) {
         setImportErrors(result.errors)
         setImportStatus('error')
@@ -202,11 +201,13 @@ export default function ExercisePanel() {
     try {
       const res = await fetch('/api/exercises')
       const data = await res.json()
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const currentExercises: Exercise[] = data[project] ?? []
+      const blob = new Blob([JSON.stringify(currentExercises, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'exercises.json'
+      const fileName = `${project}.json`
+      a.download = fileName
       a.click()
       URL.revokeObjectURL(url)
     } catch (e) {
