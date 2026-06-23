@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X, Upload, Download, RefreshCw } from 'lucide-react'
+import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X, Upload, Download, RefreshCw, Eraser } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { getExercisesForDatabase, type Exercise, type ExerciseFeedback } from '@/app/lib/exercises'
 
@@ -212,6 +212,11 @@ export default function ExercisePanel() {
     }
   }
 
+  const handleClearResults = () => {
+    setExerciseResults({})
+    localStorage.removeItem(`${RESULTS_KEY}_${project}`)
+  }
+
   const handleExport = async () => {
     try {
       const res = await fetch('/api/exercises')
@@ -235,6 +240,9 @@ export default function ExercisePanel() {
       <div className="px-3 py-2 border-b border-surface-border flex items-center justify-between">
         <h2 className="text-xs font-semibold text-txt-body uppercase tracking-wider">Ejercicios</h2>
         <div className="flex items-center gap-1">
+          <button onClick={handleClearResults} className="text-txt-dim hover:text-txt-body transition-colors" title="Limpiar correcciones">
+            <Eraser size={12} />
+          </button>
           <button onClick={loadExercisesFromApi} className="text-txt-dim hover:text-txt-body transition-colors" title="Refrescar ejercicios">
             <RefreshCw size={13} />
           </button>
