@@ -166,6 +166,14 @@ export default function TableBrowser() {
     setSwitcherOpen(true)
   }
 
+  const handleRefreshProjects = async () => {
+    try {
+      const res = await fetch('/api/projects')
+      const d = await res.json()
+      if (d?.projects) setExampleProjects(d.projects)
+    } catch {}
+  }
+
   const handleEditProject = (p: ProjectEntry) => {
     setEditingProject({ name: p.name, label: p.label })
     setSwitcherOpen(true)
@@ -392,11 +400,16 @@ export default function TableBrowser() {
           <div className="absolute left-0 right-3 top-full mt-1 bg-surface-elevated border border-surface-border rounded shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
             <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center justify-between">
               <span>Proyectos de ejemplo</span>
-              {adminToken && (
-                <button onClick={handleAddProject} className="text-txt-dim hover:text-txt-body transition-colors" title="Agregar proyecto">
-                  <Plus size={13} />
+              <div className="flex items-center gap-1">
+                <button onClick={handleRefreshProjects} className="text-txt-dim hover:text-txt-body transition-colors" title="Refrescar proyectos">
+                  <RefreshCw size={12} />
                 </button>
-              )}
+                {adminToken && (
+                  <button onClick={handleAddProject} className="text-txt-dim hover:text-txt-body transition-colors" title="Agregar proyecto">
+                    <Plus size={13} />
+                  </button>
+                )}
+              </div>
             </div>
             {exampleProjects.map((p) => (
               <div key={p.name}

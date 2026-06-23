@@ -85,7 +85,9 @@ export async function GET() {
     name,
     label: meta.label,
   }))
-  return NextResponse.json({ projects })
+  return NextResponse.json({ projects }, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  })
 }
 
 export async function POST(request: Request) {
