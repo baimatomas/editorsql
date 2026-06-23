@@ -1,16 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CheckCircle2, XCircle, Lightbulb, ChevronRight } from 'lucide-react'
 import { useDB } from '@/app/providers'
-import { EXERCISE_GROUPS, type Exercise, type ExerciseFeedback } from '@/app/lib/exercises'
+import { getExercisesForDatabase, type Exercise, type ExerciseFeedback } from '@/app/lib/exercises'
 
 export default function ExercisePanel() {
   const { gradeQuery, queryResult, addQueryTab } = useDB()
+  const [exercises, setExercises] = useState<Exercise[]>([])
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [feedback, setFeedback] = useState<ExerciseFeedback | null>(null)
   const [showHint, setShowHint] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const project = localStorage.getItem('editorsql_current_project') ?? ''
+    setExercises(getExercisesForDatabase(project))
+    setSelectedExercise(null)
+    setFeedback(null)
+    setShowHint(false)
+  }, [])
 
   const handleSelect = (ex: Exercise) => {
     setSelectedExercise(ex)
@@ -36,29 +45,26 @@ export default function ExercisePanel() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 text-xs">
-        {EXERCISE_GROUPS.map((group) => (
-          <div key={group.database}>
-            <div className="text-[10px] font-semibold text-txt-dim uppercase tracking-wider mb-1">
-              {group.label}
-            </div>
-            <div className="space-y-0.5">
-              {group.exercises.map((ex) => (
-                <button
-                  key={ex.id}
-                  onClick={() => handleSelect(ex)}
-                  className={`w-full text-left px-2 py-1.5 rounded text-[11px] transition-colors duration-75 flex items-center gap-1.5 ${
-                    selectedExercise?.id === ex.id
-                      ? 'bg-institutional-500/20 text-institutional-300 border-l-2 border-institutional-400'
-                      : 'hover:bg-surface-hover text-txt-body border-l-2 border-transparent'
-                  }`}
-                >
-                  <ChevronRight size={10} className="flex-shrink-0" />
-                  <span>{ex.title}</span>
-                </button>
-              ))}
-            </div>
+        {exercises.length === 0 ? (
+          <p className="text-[11px] text-txt-dim italic">No hay ejercicios disponibles para este proyecto.</p>
+        ) : (
+          <div className="space-y-0.5">
+            {exercises.map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => handleSelect(ex)}
+                className={`w-full text-left px-2 py-1.5 rounded text-[11px] transition-colors duration-75 flex items-center gap-1.5 ${
+                  selectedExercise?.id === ex.id
+                    ? 'bg-institutional-500/20 text-institutional-300 border-l-2 border-institutional-400'
+                    : 'hover:bg-surface-hover text-txt-body border-l-2 border-transparent'
+                }`}
+              >
+                <ChevronRight size={10} className="flex-shrink-0" />
+                <span>{ex.title}</span>
+              </button>
+            ))}
           </div>
-        ))}
+        )}
 
         {selectedExercise && (
           <div className="border-t border-surface-border pt-3 mt-3 space-y-2">

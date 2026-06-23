@@ -33,7 +33,21 @@ export const EXERCISE_GROUPS: ExerciseGroup[] = [
       },
     ],
   },
+  {
+    database: 'dvdrental',
+    label: 'DVD Rental',
+    exercises: [],
+  },
 ]
+
+export function getExercisesForDatabase(db: string): Exercise[] {
+  const group = EXERCISE_GROUPS.find(g => g.database === db)
+  return group?.exercises ?? []
+}
+
+export function hasExercisesForDatabase(db: string): boolean {
+  return getExercisesForDatabase(db).length > 0
+}
 
 export interface ExerciseFeedback {
   correct: boolean

@@ -16,6 +16,7 @@ import {
   clearDirty, migrateOldProjects, isDirty,
   type ProjectData,
 } from '@/app/lib/projectFiles'
+import { hasExercisesForDatabase } from '@/app/lib/exercises'
 
 type PanelKey = 'sidebar' | 'schema' | 'query' | 'results' | 'exercises'
 
@@ -37,6 +38,12 @@ export default function Home() {
     results: true,
     exercises: false,
   })
+  const [exercisesAvailable, setExercisesAvailable] = useState(false)
+
+  useEffect(() => {
+    const project = localStorage.getItem('editorsql_current_project')
+    if (project) setExercisesAvailable(hasExercisesForDatabase(project))
+  }, [])
 
   useEffect(() => {
     migrateOldProjects()
@@ -206,6 +213,7 @@ export default function Home() {
           onSaveProject={saveProject}
           onSaveAsProject={saveAsProject}
           onOpenProject={openProject}
+          exercisesAvailable={exercisesAvailable}
         />
 
         {!hasAny ? (

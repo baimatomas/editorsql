@@ -21,6 +21,7 @@ export default function Header({
   onSaveProject,
   onSaveAsProject,
   onOpenProject,
+  exercisesAvailable,
 }: {
   visible: Record<PanelKey, boolean>
   onToggle: (key: PanelKey) => void
@@ -28,6 +29,7 @@ export default function Header({
   onSaveProject: () => void
   onSaveAsProject: () => void
   onOpenProject: () => void
+  exercisesAvailable: boolean
 }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
 
@@ -88,15 +90,25 @@ export default function Header({
 
         {/* Tabs */}
         <div className="flex items-center gap-0.5 ml-1 h-7">
-          {TABS.map(({ key, label }) => (
-            <Button
-              key={key}
-              variant={visible[key] ? 'tab-active' : 'tab'}
-              onClick={() => onToggle(key)}
-            >
-              {label}
-            </Button>
-          ))}
+          {TABS.map(({ key, label }) => {
+            const disabled = key === 'exercises' && !exercisesAvailable
+            return (
+              <div key={key} className="relative group">
+                <Button
+                  variant={visible[key] ? 'tab-active' : 'tab'}
+                  onClick={() => onToggle(key)}
+                  disabled={disabled}
+                >
+                  {label}
+                </Button>
+                {disabled && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-surface-card border border-surface-border text-[10px] text-txt-muted whitespace-nowrap shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none">
+                    Sin ejercicios para este proyecto
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {/* Actions */}
