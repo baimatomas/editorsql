@@ -10,7 +10,7 @@ export async function GET(_request: Request, { params }: { params: { name: strin
   try {
     const { blobs } = await list({ prefix: `projects/${name}.sql`, limit: 1 })
     if (blobs.length > 0) {
-      const res = await fetch(blobs[0].url)
+      const res = await fetch(blobs[0].url, { cache: 'no-cache' })
       if (res.ok) {
         const sql = await res.text()
         return new Response(sql, {

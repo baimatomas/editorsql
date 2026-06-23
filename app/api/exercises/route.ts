@@ -23,7 +23,7 @@ async function loadExercises(): Promise<Record<string, unknown[]>> {
   try {
     const { blobs } = await list({ prefix: 'exercises.json', limit: 1 })
     if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url)
+    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {
@@ -33,7 +33,9 @@ async function loadExercises(): Promise<Record<string, unknown[]>> {
 
 export async function GET() {
   const data = await loadExercises()
-  return NextResponse.json(data)
+  return NextResponse.json(data, {
+    headers: { 'Cache-Control': 'no-store, max-age=0' },
+  })
 }
 
 export async function POST(request: Request) {
