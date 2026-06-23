@@ -12,62 +12,37 @@ function getAdminToken(): string | null {
   return localStorage.getItem(ADMIN_TOKEN_KEY)
 }
 
-function validateImportData(json: unknown, currentProject: string): { valid: boolean; summary: string; errors: string[]; data: Record<string, Exercise[]> | null } {
+function validateImportData(json: unknown, projectName: string): { valid: boolean; summary: string; errors: string[]; data: Record<string, Exercise[]> | null } {
   const errors: string[] = []
   const result: Record<string, Exercise[]> = {}
 
-  if (Array.isArray(json)) {
-    if (json.length === 0) {
-      return { valid: true, summary: 'El archivo no contiene ejercicios.', errors: [], data: { [currentProject]: [] } }
-    }
-    const validated: Exercise[] = []
-    for (let i = 0; i < json.length; i++) {
-      const item = json[i]
-      const idx = i + 1
-      if (!item || typeof item !== 'object') {
-        errors.push(`Ejercicio #${idx}: no es un objeto válido`)
-        continue
-      }
-      let hasError = false
-      if (!item.id || typeof item.id !== 'string') { errors.push(`Ejercicio #${idx}: 'id' debe ser un texto no vacío`); hasError = true }
-      if (!item.title || typeof item.title !== 'string') { errors.push(`Ejercicio #${idx}: falta 'title'`); hasError = true }
-      if (!item.description || typeof item.description !== 'string') { errors.push(`Ejercicio #${idx}: falta 'description'`); hasError = true }
-      if (!item.solution || typeof item.solution !== 'string') { errors.push(`Ejercicio #${idx}: falta 'solution'`); hasError = true }
-      if (hasError) continue
-      validated.push({ id: item.id, title: item.title, description: item.description, hint: item.hint || '', solution: item.solution })
-    }
-    if (errors.length > 0) return { valid: false, summary: '', errors, data: null }
-    result[currentProject] = validated
-    return { valid: true, summary: `Se importarán ${validated.length} ejercicio(s) para "${currentProject}".`, errors: [], data: result }
+  if (!Array.isArray(json)) {
+    return { valid: false, summary: '', errors: ['Formato no reconocido: se esperaba un array de ejercicios.'], data: null }
   }
 
-  if (typeof json === 'object' && json !== null) {
-    const entries = Object.entries(json as Record<string, unknown>)
-    if (entries.length === 0) return { valid: true, summary: 'El archivo no contiene proyectos.', errors: [], data: {} }
-    const summaryParts: string[] = []
-    for (const [proj, exercises] of entries) {
-      if (!Array.isArray(exercises)) { errors.push(`"${proj}": el valor debe ser un array`); continue }
-      const validated: Exercise[] = []
-      for (let i = 0; i < exercises.length; i++) {
-        const item = exercises[i]
-        const idx = i + 1
-        if (!item || typeof item !== 'object') { errors.push(`${proj} / Ejercicio #${idx}: no es un objeto válido`); continue }
-        let hasError = false
-        if (!item.id || typeof item.id !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: 'id' debe ser un texto no vacío`); hasError = true }
-        if (!item.title || typeof item.title !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'title'`); hasError = true }
-        if (!item.description || typeof item.description !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'description'`); hasError = true }
-        if (!item.solution || typeof item.solution !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'solution'`); hasError = true }
-        if (hasError) continue
-        validated.push({ id: item.id, title: item.title, description: item.description, hint: item.hint || '', solution: item.solution })
-      }
-      if (validated.length > 0) { result[proj] = validated; summaryParts.push(`${validated.length} en "${proj}"`) }
-    }
-    if (errors.length > 0) return { valid: false, summary: '', errors, data: null }
-    if (summaryParts.length === 0) return { valid: true, summary: 'No se encontraron ejercicios válidos en el archivo.', errors: [], data: result }
-    return { valid: true, summary: `Se importarán ${summaryParts.join(', ')}.`, errors: [], data: result }
+  if (json.length === 0) {
+    return { valid: true, summary: 'El archivo no contiene ejercicios.', errors: [], data: { [projectName]: [] } }
   }
 
-  return { valid: false, summary: '', errors: ['Formato no reconocido: se esperaba un array de ejercicios o un objeto con proyectos.'], data: null }
+  const validated: Exercise[] = []
+  for (let i = 0; i < json.length; i++) {
+    const item = json[i]
+    const idx = i + 1
+    if (!item || typeof item !== 'object') {
+      errors.push(`Ejercicio #${idx}: no es un objeto válido`)
+      continue
+    }
+    let hasError = false
+    if (!item.id || typeof item.id !== 'string') { errors.push(`Ejercicio #${idx}: 'id' debe ser un texto no vacío`); hasError = true }
+    if (!item.title || typeof item.title !== 'string') { errors.push(`Ejercicio #${idx}: falta 'title'`); hasError = true }
+    if (!item.description || typeof item.description !== 'string') { errors.push(`Ejercicio #${idx}: falta 'description'`); hasError = true }
+    if (!item.solution || typeof item.solution !== 'string') { errors.push(`Ejercicio #${idx}: falta 'solution'`); hasError = true }
+    if (hasError) continue
+    validated.push({ id: item.id, title: item.title, description: item.description, hint: item.hint || '', solution: item.solution })
+  }
+  if (errors.length > 0) return { valid: false, summary: '', errors, data: null }
+  result[projectName] = validated
+  return { valid: true, summary: `Se importarán ${validated.length} ejercicio(s) para "${projectName}".`, errors: [], data: result }
 }
 
 export default function ExercisePanel() {
@@ -183,9 +158,10 @@ export default function ExercisePanel() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
+      const projectName = file.name.replace(/\.json$/i, '')
       const text = await file.text()
       const json = JSON.parse(text)
-      const result = validateImportData(json, project)
+      const result = validateImportData(json, projectName)
       if (!result.valid) {
         setImportErrors(result.errors)
         setImportStatus('error')

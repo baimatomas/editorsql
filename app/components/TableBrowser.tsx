@@ -474,12 +474,12 @@ export default function TableBrowser() {
             <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
               Mis proyectos
             </div>
-            {sessionProjects.length === 0 ? (
+            {sessionProjects.filter(n => !exampleProjects.some(p => p.name === n) && !DEFAULT_PROJECTS.includes(n)).length === 0 ? (
               <div className="px-3 py-2 text-[11px] text-gray-500">
                 No hay proyectos en la sesión
               </div>
             ) : (
-              sessionProjects.map((name) => (
+              sessionProjects.filter(n => !exampleProjects.some(p => p.name === n) && !DEFAULT_PROJECTS.includes(n)).map((name) => (
                 <div
                   key={name}
                   className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
