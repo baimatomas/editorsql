@@ -164,14 +164,14 @@ export default function TableBrowser() {
   function q(s: string) { return `"${s}"` }
 
   function genSelectStar(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== SELECT all rows from ${t.table.name} =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} LIMIT 100;`
+    return `-- ===== SELECT todos los registros de ${t.table.name} =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} LIMIT 100;`
   }
   function genSelectCount(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== Count rows in ${t.table.name} =====\nSELECT COUNT(*) FROM ${q(t.schema)}.${q(t.table.name)};`
+    return `-- ===== Contar registros en ${t.table.name} =====\nSELECT COUNT(*) FROM ${q(t.schema)}.${q(t.table.name)};`
   }
   function genSelectColumns(t: { schema: string; table: ObjectInfo }) {
     const cols = t.table.columns.map(c => `  ${q(c.column_name)}`).join(',\n')
-    return `-- ===== SELECT specific columns from ${t.table.name} =====\nSELECT\n${cols}\nFROM ${q(t.schema)}.${q(t.table.name)}\nLIMIT 100;`
+    return `-- ===== SELECT columnas específicas de ${t.table.name} =====\nSELECT\n${cols}\nFROM ${q(t.schema)}.${q(t.table.name)}\nLIMIT 100;`
   }
   function genInsert(t: { schema: string; table: ObjectInfo }) {
     const names = t.table.columns.map(c => q(c.column_name)).join(', ')
@@ -183,23 +183,23 @@ export default function TableBrowser() {
       if (/^bool/.test(tp)) return `TRUE  -- ${c.column_name}`
       return `DEFAULT  -- ${c.column_name}`
     }).join(',\n  ')
-    return `-- ===== INSERT template for ${t.table.name} =====\nINSERT INTO ${q(t.schema)}.${q(t.table.name)} (\n  ${names}\n) VALUES (\n  ${vals}\n);`
+    return `-- ===== Plantilla INSERT para ${t.table.name} =====\nINSERT INTO ${q(t.schema)}.${q(t.table.name)} (\n  ${names}\n) VALUES (\n  ${vals}\n);`
   }
   function genUpdate(t: { schema: string; table: ObjectInfo }) {
     const pk = t.table.columns.filter(c => c.is_primary_key)
     const where = pk.length ? pk.map(c => `${q(c.column_name)} = valor_${c.column_name}`).join(' AND ') : 'condición'
-    return `-- ===== UPDATE template for ${t.table.name} =====\nUPDATE ${q(t.schema)}.${q(t.table.name)}\nSET "columna" = nuevo_valor\nWHERE ${where};`
+    return `-- ===== Plantilla UPDATE para ${t.table.name} =====\nUPDATE ${q(t.schema)}.${q(t.table.name)}\nSET "columna" = nuevo_valor\nWHERE ${where};`
   }
   function genDelete(t: { schema: string; table: ObjectInfo }) {
     const pk = t.table.columns.filter(c => c.is_primary_key)
     const where = pk.length ? pk.map(c => `${q(c.column_name)} = valor_${c.column_name}`).join(' AND ') : 'condición'
-    return `-- ===== DELETE template for ${t.table.name} =====\nDELETE FROM ${q(t.schema)}.${q(t.table.name)}\nWHERE ${where};`
+    return `-- ===== Plantilla DELETE para ${t.table.name} =====\nDELETE FROM ${q(t.schema)}.${q(t.table.name)}\nWHERE ${where};`
   }
   function genDrop(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== DROP table ${t.table.name} =====\nDROP TABLE IF EXISTS ${q(t.schema)}.${q(t.table.name)};`
+    return `-- ===== Eliminar tabla ${t.table.name} =====\nDROP TABLE IF EXISTS ${q(t.schema)}.${q(t.table.name)};`
   }
   function genTruncate(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== TRUNCATE table ${t.table.name} =====\nTRUNCATE TABLE ${q(t.schema)}.${q(t.table.name)};`
+    return `-- ===== Vaciar tabla ${t.table.name} =====\nTRUNCATE TABLE ${q(t.schema)}.${q(t.table.name)};`
   }
   function genCreateTable(t: { schema: string; table: ObjectInfo }) {
     const cols = t.table.columns.map(c => {
@@ -212,66 +212,66 @@ export default function TableBrowser() {
     const fks = (t.table.foreignKeys ?? []).map(fk =>
       `  FOREIGN KEY (${q(fk.column_name)}) REFERENCES ${q(fk.foreign_table_schema)}.${q(fk.foreign_table_name)}(${q(fk.foreign_column_name)})`
     )
-    return `-- ===== CREATE TABLE ${t.table.name} (reverse-engineered) =====\nCREATE TABLE ${q(t.schema)}.${q(t.table.name)} (\n${[...cols, ...fks].join(',\n')}\n);`
+    return `-- ===== CREATE TABLE ${t.table.name} (ingeniería inversa) =====\nCREATE TABLE ${q(t.schema)}.${q(t.table.name)} (\n${[...cols, ...fks].join(',\n')}\n);`
   }
   function genDescribe(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== Describe structure of ${t.table.name} =====\nSELECT column_name, data_type, is_nullable, column_default\nFROM information_schema.columns\nWHERE table_schema = '${t.schema}' AND table_name = '${t.table.name}'\nORDER BY ordinal_position;`
+    return `-- ===== Describir estructura de ${t.table.name} =====\nSELECT column_name, data_type, is_nullable, column_default\nFROM information_schema.columns\nWHERE table_schema = '${t.schema}' AND table_name = '${t.table.name}'\nORDER BY ordinal_position;`
   }
 
   function genAlterAddCol(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== Add column to ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ADD COLUMN "nombre_columna" tipo_dato;`
+    return `-- ===== Agregar columna a ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ADD COLUMN "nombre_columna" tipo_dato;`
   }
   function genAlterRenameTable(t: { schema: string; table: ObjectInfo }) {
-    return `-- ===== Rename table ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} RENAME TO nuevo_nombre;`
+    return `-- ===== Renombrar tabla ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} RENAME TO nuevo_nombre;`
   }
   function genAlterDropCol(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Drop column "${col}" from ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} DROP COLUMN ${q(col)};`
+    return `-- ===== Eliminar columna "${col}" de ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} DROP COLUMN ${q(col)};`
   }
   function genAlterRenameCol(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Rename column "${col}" in ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} RENAME COLUMN ${q(col)} TO nuevo_nombre;`
+    return `-- ===== Renombrar columna "${col}" en ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} RENAME COLUMN ${q(col)} TO nuevo_nombre;`
   }
   function genAlterColType(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Change type of column "${col}" in ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} TYPE nuevo_tipo;`
+    return `-- ===== Cambiar tipo de columna "${col}" en ${t.table.name} =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} TYPE nuevo_tipo;`
   }
   function genSetNotNull(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Set NOT NULL on "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} SET NOT NULL;`
+    return `-- ===== Establecer NOT NULL en "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} SET NOT NULL;`
   }
   function genDropNotNull(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Drop NOT NULL on "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} DROP NOT NULL;`
+    return `-- ===== Quitar NOT NULL en "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} DROP NOT NULL;`
   }
   function genSetDefault(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Set DEFAULT on "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} SET DEFAULT valor_por_defecto;`
+    return `-- ===== Establecer DEFAULT en "${col}" =====\nALTER TABLE ${q(t.schema)}.${q(t.table.name)} ALTER COLUMN ${q(col)} SET DEFAULT valor_por_defecto;`
   }
 
   function genSelectColumn(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== SELECT column "${col}" from ${t.table.name} =====\nSELECT ${q(col)} FROM ${q(t.schema)}.${q(t.table.name)} LIMIT 100;`
+    return `-- ===== SELECT columna "${col}" de ${t.table.name} =====\nSELECT ${q(col)} FROM ${q(t.schema)}.${q(t.table.name)} LIMIT 100;`
   }
   function genWhereColumn(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Filter by "${col}" =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} WHERE ${q(col)} = valor LIMIT 100;`
+    return `-- ===== Filtrar por "${col}" =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} WHERE ${q(col)} = valor LIMIT 100;`
   }
   function genOrderByColumn(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Order by "${col}" =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} ORDER BY ${q(col)} ASC LIMIT 100;`
+    return `-- ===== Ordenar por "${col}" =====\nSELECT * FROM ${q(t.schema)}.${q(t.table.name)} ORDER BY ${q(col)} ASC LIMIT 100;`
   }
   function genGroupByColumn(t: { schema: string; table: ObjectInfo }, col: string) {
-    return `-- ===== Group by "${col}" =====\nSELECT ${q(col)}, COUNT(*) AS total\nFROM ${q(t.schema)}.${q(t.table.name)}\nGROUP BY ${q(col)}\nORDER BY total DESC;`
+    return `-- ===== Agrupar por "${col}" =====\nSELECT ${q(col)}, COUNT(*) AS total\nFROM ${q(t.schema)}.${q(t.table.name)}\nGROUP BY ${q(col)}\nORDER BY total DESC;`
   }
 
   // View generators
   function genViewSelectStar(v: { schema: string; view: ObjectInfo }) {
-    return `-- ===== SELECT from view ${v.view.name} =====\nSELECT * FROM ${q(v.schema)}.${q(v.view.name)} LIMIT 100;`
+    return `-- ===== SELECT de la vista ${v.view.name} =====\nSELECT * FROM ${q(v.schema)}.${q(v.view.name)} LIMIT 100;`
   }
   function genViewSelectCount(v: { schema: string; view: ObjectInfo }) {
-    return `-- ===== Count rows in view ${v.view.name} =====\nSELECT COUNT(*) FROM ${q(v.schema)}.${q(v.view.name)};`
+    return `-- ===== Contar registros en la vista ${v.view.name} =====\nSELECT COUNT(*) FROM ${q(v.schema)}.${q(v.view.name)};`
   }
   function genCreateView(v: { schema: string; view: ObjectInfo }) {
     const cols = v.view.columns.map(c => `  ${q(c.column_name)}`).join(',\n')
-    return `-- ===== CREATE OR REPLACE view ${v.view.name} =====\nCREATE OR REPLACE VIEW ${q(v.schema)}.${q(v.view.name)} AS\nSELECT\n${cols}\nFROM ${q(v.schema)}."nombre_tabla_origen"\nWHERE condición;`
+    return `-- ===== CREATE OR REPLACE vista ${v.view.name} =====\nCREATE OR REPLACE VIEW ${q(v.schema)}.${q(v.view.name)} AS\nSELECT\n${cols}\nFROM ${q(v.schema)}."nombre_tabla_origen"\nWHERE condición;`
   }
   function genDropView(v: { schema: string; view: ObjectInfo }) {
-    return `-- ===== DROP view ${v.view.name} =====\nDROP VIEW IF EXISTS ${q(v.schema)}.${q(v.view.name)};`
+    return `-- ===== Eliminar vista ${v.view.name} =====\nDROP VIEW IF EXISTS ${q(v.schema)}.${q(v.view.name)};`
   }
   function genDescribeView(v: { schema: string; view: ObjectInfo }) {
-    return `-- ===== Describe view ${v.view.name} =====\nSELECT column_name, data_type, is_nullable\nFROM information_schema.columns\nWHERE table_schema = '${v.schema}' AND table_name = '${v.view.name}'\nORDER BY ordinal_position;`
+    return `-- ===== Describir vista ${v.view.name} =====\nSELECT column_name, data_type, is_nullable\nFROM information_schema.columns\nWHERE table_schema = '${v.schema}' AND table_name = '${v.view.name}'\nORDER BY ordinal_position;`
   }
 
   if (!ready) {
