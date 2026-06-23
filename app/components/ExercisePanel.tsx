@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X, Upload, Download } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { getExercisesForDatabase, type Exercise, type ExerciseFeedback } from '@/app/lib/exercises'
 
@@ -10,6 +10,64 @@ const ADMIN_TOKEN_KEY = 'editorsql_admin_token'
 function getAdminToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem(ADMIN_TOKEN_KEY)
+}
+
+function validateImportData(json: unknown, currentProject: string): { valid: boolean; summary: string; errors: string[]; data: Record<string, Exercise[]> | null } {
+  const errors: string[] = []
+  const result: Record<string, Exercise[]> = {}
+
+  if (Array.isArray(json)) {
+    if (json.length === 0) {
+      return { valid: true, summary: 'El archivo no contiene ejercicios.', errors: [], data: { [currentProject]: [] } }
+    }
+    const validated: Exercise[] = []
+    for (let i = 0; i < json.length; i++) {
+      const item = json[i]
+      const idx = i + 1
+      if (!item || typeof item !== 'object') {
+        errors.push(`Ejercicio #${idx}: no es un objeto válido`)
+        continue
+      }
+      let hasError = false
+      if (!item.id || typeof item.id !== 'string') { errors.push(`Ejercicio #${idx}: 'id' debe ser un texto no vacío`); hasError = true }
+      if (!item.title || typeof item.title !== 'string') { errors.push(`Ejercicio #${idx}: falta 'title'`); hasError = true }
+      if (!item.description || typeof item.description !== 'string') { errors.push(`Ejercicio #${idx}: falta 'description'`); hasError = true }
+      if (!item.solution || typeof item.solution !== 'string') { errors.push(`Ejercicio #${idx}: falta 'solution'`); hasError = true }
+      if (hasError) continue
+      validated.push({ id: item.id, title: item.title, description: item.description, hint: item.hint || '', solution: item.solution })
+    }
+    if (errors.length > 0) return { valid: false, summary: '', errors, data: null }
+    result[currentProject] = validated
+    return { valid: true, summary: `Se importarán ${validated.length} ejercicio(s) para "${currentProject}".`, errors: [], data: result }
+  }
+
+  if (typeof json === 'object' && json !== null) {
+    const entries = Object.entries(json as Record<string, unknown>)
+    if (entries.length === 0) return { valid: true, summary: 'El archivo no contiene proyectos.', errors: [], data: {} }
+    const summaryParts: string[] = []
+    for (const [proj, exercises] of entries) {
+      if (!Array.isArray(exercises)) { errors.push(`"${proj}": el valor debe ser un array`); continue }
+      const validated: Exercise[] = []
+      for (let i = 0; i < exercises.length; i++) {
+        const item = exercises[i]
+        const idx = i + 1
+        if (!item || typeof item !== 'object') { errors.push(`${proj} / Ejercicio #${idx}: no es un objeto válido`); continue }
+        let hasError = false
+        if (!item.id || typeof item.id !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: 'id' debe ser un texto no vacío`); hasError = true }
+        if (!item.title || typeof item.title !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'title'`); hasError = true }
+        if (!item.description || typeof item.description !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'description'`); hasError = true }
+        if (!item.solution || typeof item.solution !== 'string') { errors.push(`${proj} / Ejercicio #${idx}: falta 'solution'`); hasError = true }
+        if (hasError) continue
+        validated.push({ id: item.id, title: item.title, description: item.description, hint: item.hint || '', solution: item.solution })
+      }
+      if (validated.length > 0) { result[proj] = validated; summaryParts.push(`${validated.length} en "${proj}"`) }
+    }
+    if (errors.length > 0) return { valid: false, summary: '', errors, data: null }
+    if (summaryParts.length === 0) return { valid: true, summary: 'No se encontraron ejercicios válidos en el archivo.', errors: [], data: result }
+    return { valid: true, summary: `Se importarán ${summaryParts.join(', ')}.`, errors: [], data: result }
+  }
+
+  return { valid: false, summary: '', errors: ['Formato no reconocido: se esperaba un array de ejercicios o un objeto con proyectos.'], data: null }
 }
 
 export default function ExercisePanel() {
@@ -22,6 +80,11 @@ export default function ExercisePanel() {
   const [adminToken, setAdminToken] = useState<string | null>(getAdminToken())
   const [editingExercise, setEditingExercise] = useState<Partial<Exercise> | null>(null)
   const [isNew, setIsNew] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importStatus, setImportStatus] = useState<'idle' | 'preview' | 'error' | 'done'>('idle')
+  const [importSummary, setImportSummary] = useState('')
+  const [importErrors, setImportErrors] = useState<string[]>([])
+  const [importData, setImportData] = useState<Record<string, Exercise[]> | null>(null)
 
   const project = typeof window !== 'undefined' ? localStorage.getItem('editorsql_current_project') ?? '' : ''
 
@@ -42,6 +105,10 @@ export default function ExercisePanel() {
     setSelectedExercise(null)
     setFeedback(null)
     setShowHint(false)
+    setImportStatus('idle')
+    setImportErrors([])
+    setImportSummary('')
+    setImportData(null)
   }, [project])
 
   const saveExercises = async (updated: Exercise[]) => {
@@ -104,6 +171,65 @@ export default function ExercisePanel() {
     }
     setEditingExercise(null)
     setIsNew(false)
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      const json = JSON.parse(text)
+      const result = validateImportData(json, project)
+      if (!result.valid) {
+        setImportErrors(result.errors)
+        setImportStatus('error')
+        return
+      }
+      setImportSummary(result.summary)
+      setImportData(result.data)
+      setImportStatus('preview')
+    } catch (err) {
+      setImportErrors(['El archivo no contiene un JSON válido: ' + (err as Error).message])
+      setImportStatus('error')
+    }
+    e.target.value = ''
+  }
+
+  const handleImportConfirm = async () => {
+    if (!importData || !adminToken) return
+    try {
+      const res = await fetch('/api/exercises', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+        body: JSON.stringify(importData),
+      })
+      if (!res.ok) { const text = await res.text(); throw new Error(text) }
+      const reloadRes = await fetch('/api/exercises')
+      const reloadData: Record<string, Exercise[]> = await reloadRes.json()
+      const reloaded = reloadData[project]
+      if (reloaded) setExercises(reloaded)
+      setImportStatus('done')
+      setTimeout(() => setImportStatus('idle'), 3000)
+    } catch (e) {
+      setImportErrors(['Error al importar: ' + (e as Error).message])
+      setImportStatus('error')
+    }
+  }
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch('/api/exercises')
+      const data = await res.json()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'exercises.json'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Error al exportar: ' + (e as Error).message)
+    }
   }
 
   return (
@@ -201,6 +327,57 @@ export default function ExercisePanel() {
                 <X size={11} /> Cancelar
               </button>
             </div>
+          </div>
+        )}
+
+        {adminToken && (
+          <div className="border-t border-surface-border pt-3 mt-3 space-y-2">
+            <div className="text-[10px] font-semibold text-txt-dim uppercase tracking-wider">Importar / Exportar</div>
+
+            {importStatus === 'idle' && (
+              <div className="flex gap-2">
+                <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileSelect} hidden />
+                <button onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded border border-surface-border text-txt-dim hover:text-txt-body hover:bg-surface-hover transition-colors">
+                  <Upload size={11} /> Importar JSON
+                </button>
+                <button onClick={handleExport}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded border border-surface-border text-txt-dim hover:text-txt-body hover:bg-surface-hover transition-colors">
+                  <Download size={11} /> Exportar JSON
+                </button>
+              </div>
+            )}
+
+            {importStatus === 'preview' && (
+              <div className="space-y-2">
+                <p className="text-[11px] text-txt-body">{importSummary}</p>
+                <div className="flex gap-2">
+                  <button onClick={handleImportConfirm}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded bg-institutional-600 text-white hover:bg-institutional-500 transition-colors">
+                    <Upload size={11} /> Confirmar importación
+                  </button>
+                  <button onClick={() => setImportStatus('idle')}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded border border-surface-border text-txt-dim hover:text-txt-body transition-colors">
+                    <X size={11} /> Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {importStatus === 'error' && (
+              <div className="space-y-1.5">
+                <div className="text-[11px] text-red-400 font-medium">Errores en el archivo:</div>
+                {importErrors.map((err, i) => (
+                  <p key={i} className="text-[10px] text-red-300">• {err}</p>
+                ))}
+                <button onClick={() => setImportStatus('idle')}
+                  className="text-[11px] text-txt-dim hover:text-txt-body underline transition-colors">Volver</button>
+              </div>
+            )}
+
+            {importStatus === 'done' && (
+              <p className="text-[11px] text-emerald-400">✓ Importado exitosamente.</p>
+            )}
           </div>
         )}
 
