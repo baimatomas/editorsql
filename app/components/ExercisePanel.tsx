@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X, Upload, Download } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { CheckCircle2, XCircle, Lightbulb, ChevronRight, Plus, Pencil, Trash2, Save, X, Upload, Download, RefreshCw } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { getExercisesForDatabase, type Exercise, type ExerciseFeedback } from '@/app/lib/exercises'
 
@@ -88,20 +88,21 @@ export default function ExercisePanel() {
 
   const project = typeof window !== 'undefined' ? localStorage.getItem('editorsql_current_project') ?? '' : ''
 
+  const loadExercisesFromApi = useCallback(async () => {
+    try {
+      const res = await fetch('/api/exercises')
+      const data: Record<string, Exercise[]> = await res.json()
+      const apiExercises = data[project]
+      if (apiExercises && apiExercises.length > 0) {
+        setExercises(apiExercises)
+        return
+      }
+    } catch {}
+    setExercises(getExercisesForDatabase(project))
+  }, [project])
+
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/exercises')
-        const data: Record<string, Exercise[]> = await res.json()
-        const apiExercises = data[project]
-        if (apiExercises && apiExercises.length > 0) {
-          setExercises(apiExercises)
-          return
-        }
-      } catch {}
-      setExercises(getExercisesForDatabase(project))
-    }
-    load()
+    loadExercisesFromApi()
     setSelectedExercise(null)
     setFeedback(null)
     setShowHint(false)
@@ -109,7 +110,7 @@ export default function ExercisePanel() {
     setImportErrors([])
     setImportSummary('')
     setImportData(null)
-  }, [project])
+  }, [project, loadExercisesFromApi])
 
   const saveExercises = async (updated: Exercise[]) => {
     if (!adminToken) return
@@ -236,11 +237,16 @@ export default function ExercisePanel() {
     <div className="flex flex-col h-full overflow-hidden">
       <div className="px-3 py-2 border-b border-surface-border flex items-center justify-between">
         <h2 className="text-xs font-semibold text-txt-body uppercase tracking-wider">Ejercicios</h2>
-        {adminToken && (
-          <button onClick={handleAdd} className="text-txt-dim hover:text-txt-body transition-colors" title="Nuevo ejercicio">
-            <Plus size={14} />
+        <div className="flex items-center gap-1">
+          <button onClick={loadExercisesFromApi} className="text-txt-dim hover:text-txt-body transition-colors" title="Refrescar ejercicios">
+            <RefreshCw size={13} />
           </button>
-        )}
+          {adminToken && (
+            <button onClick={handleAdd} className="text-txt-dim hover:text-txt-body transition-colors" title="Nuevo ejercicio">
+              <Plus size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-2 space-y-3 text-xs">
