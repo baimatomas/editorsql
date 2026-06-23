@@ -261,7 +261,7 @@ export default function ExercisePanel() {
                     onClick={() => handleSelect(ex)}
                     className={`flex-1 text-left px-2 py-1.5 rounded text-[11px] transition-colors duration-75 flex items-center gap-1.5 ${
                       selectedExercise?.id === ex.id
-                        ? 'bg-institutional-500/20 text-institutional-300 border-l-2 border-institutional-400'
+                        ? 'bg-institutional-500/20 text-txt-body border-l-2 border-institutional-400'
                         : 'hover:bg-surface-hover text-txt-body border-l-2 border-transparent'
                     }`}
                   >
