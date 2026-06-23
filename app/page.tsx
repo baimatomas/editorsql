@@ -9,6 +9,7 @@ import DERViewer from '@/app/components/DERViewer'
 import QueryEditor from '@/app/components/QueryEditor'
 import TableBrowser from '@/app/components/TableBrowser'
 import ResultTable from '@/app/components/ResultTable'
+import ExercisePanel from '@/app/components/ExercisePanel'
 import {
   saveProjectFile, openProjectFile,
   saveSessionProject, getSessionProjects,
@@ -16,7 +17,7 @@ import {
   type ProjectData,
 } from '@/app/lib/projectFiles'
 
-type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
+type PanelKey = 'sidebar' | 'schema' | 'query' | 'results' | 'exercises'
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -34,6 +35,7 @@ export default function Home() {
     schema: false,
     query: true,
     results: true,
+    exercises: false,
   })
 
   useEffect(() => {
@@ -193,7 +195,7 @@ export default function Home() {
     location.reload()
   }
 
-  const hasAny = visible.sidebar || visible.schema || visible.query || visible.results
+  const hasAny = visible.sidebar || visible.schema || visible.query || visible.results || visible.exercises
 
   return (
     <div className="h-screen flex flex-col panel-gradient text-txt-body">
@@ -256,6 +258,14 @@ export default function Home() {
                 <ResultTable />
               )}
             </Panel>
+            {visible.exercises && (
+              <>
+                <Separator className="w-[3px] bg-surface-border hover:bg-institutional-500 transition-colors duration-150 cursor-col-resize" />
+                <Panel id="exercises" defaultSize="22%" minSize="8%" className="panel-gradient">
+                  <ExercisePanel />
+                </Panel>
+              </>
+            )}
           </Group>
         )}
         {/* Status bar */}

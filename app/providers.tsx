@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
 import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
-
+import type { ExerciseFeedback } from '@/app/lib/exercises'
 export interface ColumnInfo {
   column_name: string
   data_type: string
@@ -76,6 +76,7 @@ interface DBContextType {
   currentPage: number
   pageSize: number
   setPage: (page: number) => void
+  gradeQuery: (expectedSql: string) => Promise<ExerciseFeedback>
 }
 
 export const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
@@ -510,6 +511,68 @@ export function DBProvider({ children }: { children: ReactNode }) {
     }
   }, [db])
 
+  const gradeQuery = useCallback(async (expectedSql: string): Promise<ExerciseFeedback> => {
+    const studentRows = queryResult as Record<string, unknown>[] | null
+    const studentColumns = studentRows && studentRows.length > 0
+      ? Object.keys(studentRows[0])
+      : []
+    const studentRowCount = studentRows?.length ?? 0
+
+    try {
+      if (!db) throw new Error('Base de datos no disponible')
+      const expectedResult = await db.query(expectedSql)
+      const expectedRows = expectedResult.rows as Record<string, unknown>[]
+      const expectedColumns = expectedRows.length > 0
+        ? Object.keys(expectedRows[0])
+        : []
+      const expectedRowCount = expectedRows.length
+
+      const normalize = (cols: string[]) => cols.map(c => c.toLowerCase()).sort()
+      const sCols = normalize(studentColumns)
+      const eCols = normalize(expectedColumns)
+
+      const missing = eCols.filter(c => !sCols.includes(c))
+      const extra = sCols.filter(c => !eCols.includes(c))
+      const columnsMatch = missing.length === 0 && extra.length === 0
+      const rowCountMatch = studentRowCount === expectedRowCount
+
+      const correct = columnsMatch && rowCountMatch
+
+      let details = ''
+      if (correct) {
+        details = '¡Correcto! La consulta devuelve las columnas y filas esperadas.'
+      } else {
+        const parts: string[] = []
+        if (!columnsMatch) {
+          if (missing.length > 0) parts.push(`Faltan columnas: ${missing.join(', ')}`)
+          if (extra.length > 0) parts.push(`Sobran columnas: ${extra.join(', ')}`)
+        }
+        if (!rowCountMatch) {
+          parts.push(`Filas devueltas: ${studentRowCount}, esperadas: ${expectedRowCount}`)
+        }
+        details = parts.join('. ') + '.'
+      }
+
+      return {
+        correct,
+        studentColumns,
+        expectedColumns,
+        studentRows: studentRowCount,
+        expectedRows: expectedRowCount,
+        details,
+      }
+    } catch {
+      return {
+        correct: false,
+        studentColumns,
+        expectedColumns: [],
+        studentRows: studentRowCount,
+        expectedRows: 0,
+        details: 'Error al ejecutar la solución de referencia.',
+      }
+    }
+  }, [db, queryResult])
+
   const saveQuery = useCallback((name: string, sql: string) => {
     setSavedQueries((prev) => [
       { id: crypto.randomUUID(), name, sql, createdAt: Date.now() },
@@ -676,6 +739,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         queryTabs, activeTabId, addQueryTab, closeQueryTab, renameQueryTab, setActiveTabId, setQueryTabSQL,
         getDump, refreshTables,
         totalRowCount, currentPage, pageSize: PAGE_SIZE, setPage,
+        gradeQuery,
       }}
     >
       {children}

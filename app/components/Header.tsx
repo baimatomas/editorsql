@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import { FilePlus, Save, SaveAll, FolderOpen, Sun, Moon } from 'lucide-react'
 import Button from '@/app/components/ui/Button'
 
-export type PanelKey = 'sidebar' | 'schema' | 'query' | 'results'
+export type PanelKey = 'sidebar' | 'schema' | 'query' | 'results' | 'exercises'
 
 const TABS: { key: PanelKey; label: string }[] = [
   { key: 'sidebar', label: 'Tablas' },
   { key: 'schema', label: 'DER' },
   { key: 'query', label: 'Query' },
   { key: 'results', label: 'Resultados' },
+  { key: 'exercises', label: 'Ejercicios' },
 ]
 
 export default function Header({
