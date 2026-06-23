@@ -191,8 +191,11 @@ export default function TableBrowser() {
       })
       if (!res.ok) { const text = await res.text(); throw new Error(text) }
       setExampleProjects(prev => prev.filter(x => x.name !== p.name))
+      Swal.fire(swalTheme({
+        icon: 'success', title: 'Eliminado', text: `"${p.label}" se eliminó correctamente.`, timer: 2000, showConfirmButton: false,
+      }))
     } catch (e) {
-      alert('Error al eliminar: ' + (e as Error).message)
+      Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: (e as Error).message, confirmButtonText: 'OK' }))
     }
   }
 
@@ -200,10 +203,11 @@ export default function TableBrowser() {
     if (!editingProject || !editingProject.label.trim() || !adminToken) return
     const isNew = !editingProject.name
     const file = fileInputRef.current?.files?.[0]
-    if (isNew && !file) { alert('Debe seleccionar un archivo .sql'); return }
+    const { default: Swal } = await import('sweetalert2')
+    if (isNew && !file) { Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: 'Debe seleccionar un archivo .sql', confirmButtonText: 'OK' })); return }
     if (file) {
-      if (!file.name.endsWith('.sql')) { alert('Solo se aceptan archivos .sql'); return }
-      if (file.size > 4 * 1024 * 1024) { alert('El archivo excede el límite de 4 MB'); return }
+      if (!file.name.endsWith('.sql')) { Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: 'Solo se aceptan archivos .sql', confirmButtonText: 'OK' })); return }
+      if (file.size > 4 * 1024 * 1024) { Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: 'El archivo excede el límite de 4 MB', confirmButtonText: 'OK' })); return }
     }
 
     const body = new FormData()
@@ -220,7 +224,7 @@ export default function TableBrowser() {
       })
       if (!res.ok) {
         const err = await res.json()
-        alert(err.error || 'Error al guardar')
+        Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: err.error || 'Error al guardar', confirmButtonText: 'OK' }))
         return
       }
       const data = await fetch('/api/projects')
@@ -228,8 +232,11 @@ export default function TableBrowser() {
       if (d?.projects) setExampleProjects(d.projects)
       setEditingProject(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
+      Swal.fire(swalTheme({
+        icon: 'success', title: isNew ? 'Creado' : 'Actualizado', text: `"${editingProject.label.trim()}" se guardó correctamente.`, timer: 2000, showConfirmButton: false,
+      }))
     } catch (e) {
-      alert('Error al guardar: ' + (e as Error).message)
+      Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: (e as Error).message, confirmButtonText: 'OK' }))
     }
   }
 
