@@ -60,8 +60,18 @@ export default function ExercisePanel() {
   const [importSummary, setImportSummary] = useState('')
   const [importErrors, setImportErrors] = useState<string[]>([])
   const [importData, setImportData] = useState<Record<string, Exercise[]> | null>(null)
+  const [exerciseResults, setExerciseResults] = useState<Record<string, boolean>>({})
+
+  const RESULTS_KEY = 'editorsql_exercise_results'
 
   const project = typeof window !== 'undefined' ? localStorage.getItem('editorsql_current_project') ?? '' : ''
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`${RESULTS_KEY}_${project}`)
+      if (stored) setExerciseResults(JSON.parse(stored))
+    } catch {}
+  }, [project])
 
   const loadExercisesFromApi = useCallback(async () => {
     try {
@@ -121,6 +131,11 @@ export default function ExercisePanel() {
     setLoading(true)
     const result = await gradeQuery(selectedExercise.solution)
     setFeedback(result)
+    setExerciseResults(prev => {
+      const next = { ...prev, [selectedExercise.id]: result.correct }
+      localStorage.setItem(`${RESULTS_KEY}_${project}`, JSON.stringify(next))
+      return next
+    })
     setLoading(false)
   }
 
@@ -248,6 +263,11 @@ export default function ExercisePanel() {
                     }`}
                   >
                     <ChevronRight size={10} className="flex-shrink-0" />
+                    {exerciseResults[ex.id] !== undefined && (
+                      exerciseResults[ex.id]
+                        ? <CheckCircle2 size={10} className="text-emerald-400 flex-shrink-0" />
+                        : <XCircle size={10} className="text-red-400 flex-shrink-0" />
+                    )}
                     <span>{ex.title}</span>
                   </button>
                   {adminToken && (
