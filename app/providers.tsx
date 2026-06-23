@@ -443,7 +443,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       if (!trimmed) return
 
       const cleaned = trimmed.replace(/;+\s*$/, '').trim()
-      const stripped = cleaned.replace(/\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i, '')
+      const hasExplicitLimit = /\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i.test(cleaned)
 
       const noComments = trimmed
         .replace(/--.*$/gm, '')
@@ -456,19 +456,24 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const start = performance.now()
       try {
         if (isQuery) {
-          execSqlRef.current = stripped
-
-          let total = 0
-          try {
-            const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${stripped}) AS _p`)
-            total = Number((cnt.rows[0] as Record<string, unknown>).cnt)
-          } catch {
-            total = 0
+          if (hasExplicitLimit) {
+            execSqlRef.current = ''
+            setTotalRowCount(0)
+            const result = await db.query(cleaned)
+            setQueryResult(result.rows as unknown[])
+          } else {
+            execSqlRef.current = cleaned
+            let total = 0
+            try {
+              const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${cleaned}) AS _p`)
+              total = Number((cnt.rows[0] as Record<string, unknown>).cnt)
+            } catch {
+              total = 0
+            }
+            setTotalRowCount(total)
+            const result = await db.query(`${cleaned} LIMIT ${PAGE_SIZE} OFFSET 0`)
+            setQueryResult(result.rows as unknown[])
           }
-          setTotalRowCount(total)
-
-          const result = await db.query(`${stripped} LIMIT ${PAGE_SIZE} OFFSET 0`)
-          setQueryResult(result.rows as unknown[])
         } else {
           execSqlRef.current = ''
           setTotalRowCount(0)
