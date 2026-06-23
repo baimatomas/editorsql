@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Database, Table2, Eye, FunctionSquare, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, FolderKanban, Hash, Calendar, FileText, ToggleLeft, HelpCircle } from 'lucide-react'
+import { Database, Table2, Eye, FunctionSquare, FolderOpen, Trash2, RefreshCw, ChevronRight, ChevronDown, FolderKanban, Hash, Calendar, FileText, ToggleLeft, HelpCircle, Plus, Pencil, Save, Upload, X } from 'lucide-react'
 import { useDB, DEFAULT_PROJECTS, type ObjectInfo, type ColumnInfo } from '@/app/providers'
 import Badge from '@/app/components/ui/Badge'
 import {
@@ -10,6 +10,7 @@ import {
   type ProjectData,
 } from '@/app/lib/projectFiles'
 import { swalTheme } from '@/app/lib/swalConfig'
+import { type ProjectEntry } from '@/app/lib/projects'
 
 type CtxTarget =
   | { kind: 'table'; schema: string; table: ObjectInfo }
@@ -64,10 +65,18 @@ export default function TableBrowser() {
   const [ctxMenu, setCtxMenu] = useState<{ target: CtxTarget; x: number; y: number } | null>(null)
   const [ctxSub, setCtxSub] = useState<string | null>(null)
   const switcherRef = useRef<HTMLDivElement>(null)
+  const [exampleProjects, setExampleProjects] = useState<ProjectEntry[]>([])
+  const [adminToken, setAdminToken] = useState<string | null>(null)
+  const [editingProject, setEditingProject] = useState<{ name?: string; label: string } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setProjectName(localStorage.getItem('editorsql_current_project'))
     setSessionProjects(getSessionProjects())
+    setAdminToken(localStorage.getItem('editorsql_admin_token'))
+    fetch('/api/projects').then(r => r.ok && r.json()).then(d => {
+      if (d?.projects) setExampleProjects(d.projects)
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -94,7 +103,8 @@ export default function TableBrowser() {
     if (!proceed) return
 
     const cur = localStorage.getItem('editorsql_current_project')
-    if (cur && !DEFAULT_PROJECTS.includes(cur)) {
+    const isExample = exampleProjects.some(p => p.name === cur) || (cur ? DEFAULT_PROJECTS.includes(cur) : false)
+    if (cur && !isExample) {
       const dump = await getDump()
       const data: ProjectData = {
         name: cur,
@@ -106,9 +116,10 @@ export default function TableBrowser() {
       saveSessionProject(cur, data)
     }
 
-    if (DEFAULT_PROJECTS.includes(name)) {
+    const isTargetExample = exampleProjects.some(p => p.name === name) || DEFAULT_PROJECTS.includes(name)
+    if (isTargetExample) {
       try {
-        const head = await fetch(`/projects/${name}.sql`, { method: 'HEAD' })
+        const head = await fetch(`/api/projects/${name}/sql`, { method: 'HEAD' })
         if (!head.ok) throw new Error('Archivo no encontrado')
         localStorage.setItem('editorsql_load_default', name)
         localStorage.setItem('editorsql_current_project', name)
@@ -145,9 +156,81 @@ export default function TableBrowser() {
   }
 
   const removeFromSession = (name: string) => {
-    if (DEFAULT_PROJECTS.includes(name)) return
+    if (exampleProjects.some(p => p.name === name)) return
     removeSessionProject(name)
     setSessionProjects(getSessionProjects())
+  }
+
+  const handleAddProject = () => {
+    setEditingProject({ label: '' })
+    setSwitcherOpen(true)
+  }
+
+  const handleEditProject = (p: ProjectEntry) => {
+    setEditingProject({ name: p.name, label: p.label })
+    setSwitcherOpen(true)
+  }
+
+  const handleDeleteProject = async (p: ProjectEntry) => {
+    if (!adminToken) return
+    const { default: Swal } = await import('sweetalert2')
+    const result = await Swal.fire(swalTheme({
+      title: `¿Eliminar "${p.label}"?`,
+      html: `Se eliminará la base de datos del servidor y también se borrarán los ejercicios asociados.<br><br>Esta acción no se puede deshacer.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+    }))
+    if (!result.isConfirmed) return
+    try {
+      const res = await fetch(`/api/projects/${p.name}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      })
+      if (!res.ok) { const text = await res.text(); throw new Error(text) }
+      setExampleProjects(prev => prev.filter(x => x.name !== p.name))
+    } catch (e) {
+      alert('Error al eliminar: ' + (e as Error).message)
+    }
+  }
+
+  const handleSaveProject = async () => {
+    if (!editingProject || !editingProject.label.trim() || !adminToken) return
+    const isNew = !editingProject.name
+    const file = fileInputRef.current?.files?.[0]
+    if (isNew && !file) { alert('Debe seleccionar un archivo .sql'); return }
+    if (file) {
+      if (!file.name.endsWith('.sql')) { alert('Solo se aceptan archivos .sql'); return }
+      if (file.size > 4 * 1024 * 1024) { alert('El archivo excede el límite de 4 MB'); return }
+    }
+
+    const body = new FormData()
+    body.set('label', editingProject.label.trim())
+    if (file) body.set('file', file)
+
+    try {
+      const url = isNew ? '/api/projects' : `/api/projects/${editingProject.name}`
+      const method = isNew ? 'POST' : 'PUT'
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body,
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Error al guardar')
+        return
+      }
+      const data = await fetch('/api/projects')
+      const d = await data.json()
+      if (d?.projects) setExampleProjects(d.projects)
+      setEditingProject(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    } catch (e) {
+      alert('Error al guardar: ' + (e as Error).message)
+    }
   }
 
   const ctxClose = useCallback(() => { setCtxMenu(null); setCtxSub(null) }, [])
@@ -297,23 +380,70 @@ export default function TableBrowser() {
         </button>
 
         {switcherOpen && (
-          <div className="absolute left-0 right-3 top-full mt-1 bg-surface-elevated border border-surface-border rounded shadow-lg z-50 max-h-72 overflow-y-auto animate-fade-in">
-            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
-              Proyectos de ejemplo
+          <div className="absolute left-0 right-3 top-full mt-1 bg-surface-elevated border border-surface-border rounded shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
+            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center justify-between">
+              <span>Proyectos de ejemplo</span>
+              {adminToken && (
+                <button onClick={handleAddProject} className="text-txt-dim hover:text-txt-body transition-colors" title="Agregar proyecto">
+                  <Plus size={13} />
+                </button>
+              )}
             </div>
-            {DEFAULT_PROJECTS.map((name) => (
-              <div
-                key={name}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer transition-colors duration-100"
-                onClick={() => switchToProject(name)}
+            {exampleProjects.map((p) => (
+              <div key={p.name}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
+                onClick={() => { if (!editingProject) switchToProject(p.name) }}
               >
                 <FolderKanban size={14} className="text-institutional-400 flex-shrink-0" />
-                <span className="flex-1 truncate capitalize">{name}</span>
-                {name === projectName && (
+                <span className="flex-1 truncate">{p.label}</span>
+                {p.name === projectName && (
                   <Badge variant="pk">activo</Badge>
+                )}
+                {adminToken && !editingProject && (
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={(e) => { e.stopPropagation(); handleEditProject(p) }} className="p-0.5 text-txt-dim hover:text-txt-body" title="Editar">
+                      <Pencil size={11} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p) }} className="p-0.5 text-txt-dim hover:text-red-400" title="Eliminar">
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
+
+            {editingProject && (
+              <div className="px-3 py-2 border-t border-surface-border space-y-2">
+                <div className="text-[10px] font-semibold text-txt-dim uppercase tracking-wider">
+                  {editingProject.name ? 'Editar proyecto' : 'Nuevo proyecto'}
+                </div>
+                <div>
+                  <label className="text-[10px] text-txt-dim block mb-0.5">Label</label>
+                  <input type="text" value={editingProject.label}
+                    onChange={(e) => setEditingProject({ ...editingProject, label: e.target.value })}
+                    className="w-full px-2 py-1 text-[11px] rounded border border-surface-border bg-surface text-txt-body focus:outline-none focus:border-institutional-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-txt-dim block mb-0.5">
+                    {editingProject.name ? 'Archivo .sql (dejar vacío para mantener el actual)' : 'Archivo .sql'}
+                  </label>
+                  <input type="file" accept=".sql" ref={fileInputRef}
+                    className="w-full text-[11px] text-txt-muted file:mr-2 file:py-1 file:px-2.5 file:border file:border-surface-border file:rounded file:text-[11px] file:bg-surface file:text-txt-body hover:file:bg-surface-hover"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button onClick={handleSaveProject} disabled={!editingProject.label.trim()}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded bg-institutional-600 text-white hover:bg-institutional-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    <Save size={11} /> Guardar
+                  </button>
+                  <button onClick={() => { setEditingProject(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded border border-surface-border text-txt-dim hover:text-txt-body transition-colors">
+                    <X size={11} /> Cancelar
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="border-t border-surface-border my-1" />
 

@@ -701,7 +701,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('editorsql_restore_data')
           localStorage.removeItem('editorsql_load_default')
         } else if (defaultFlag) {
-          const res = await fetch(`/projects/${defaultFlag}.sql`)
+          const res = await fetch(`/api/projects/${defaultFlag}/sql`)
           if (!res.ok) throw new Error(`No se pudo descargar ${defaultFlag}.sql`)
           const sql = await res.text()
           await db.exec(sql)
