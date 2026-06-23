@@ -90,7 +90,7 @@ export default function Home() {
     const { default: Swal } = await import('sweetalert2')
 
     let name = localStorage.getItem('editorsql_current_project')
-    if (name && DEFAULT_PROJECTS.includes(name)) {
+    if (name && (DEFAULT_PROJECTS.includes(name) || localStorage.getItem('editorsql_remote') === name)) {
       await Swal.fire({ ...swalBase(), icon: 'error', title: 'Error', text: 'No se puede sobrescribir un proyecto de ejemplo.\nUsá "Guardar Como" para crear una copia con otro nombre.', confirmButtonText: 'OK' })
       return
     }
@@ -124,7 +124,7 @@ export default function Home() {
     const result = await Swal.fire({ ...swalBase(), title: 'Guardar como', input: 'text', inputPlaceholder: 'Nombre del proyecto...', showCancelButton: true, confirmButtonText: 'Guardar', cancelButtonText: 'Cancelar', inputValidator: (v) => { if (!v?.trim()) return 'El nombre no puede estar vacío' } })
     if (!result.isConfirmed || !result.value?.trim()) return
     const trimmed = result.value.trim()
-    if (DEFAULT_PROJECTS.includes(trimmed)) {
+    if (DEFAULT_PROJECTS.includes(trimmed) || localStorage.getItem('editorsql_remote') === trimmed) {
       await Swal.fire({ ...swalBase(), icon: 'error', title: 'Error', text: 'No se puede usar el nombre de un proyecto de ejemplo.', confirmButtonText: 'OK' })
       return
     }
@@ -174,7 +174,7 @@ export default function Home() {
 
     // Save current state to session cache
     const currentName = localStorage.getItem('editorsql_current_project')
-    if (currentName && !DEFAULT_PROJECTS.includes(currentName)) {
+    if (currentName && !DEFAULT_PROJECTS.includes(currentName) && localStorage.getItem('editorsql_remote') !== currentName) {
       const dump = await getDump()
       const data: ProjectData = {
         name: currentName,
