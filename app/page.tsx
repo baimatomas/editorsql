@@ -17,6 +17,7 @@ import {
   type ProjectData,
 } from '@/app/lib/projectFiles'
 import { hasExercisesForDatabase } from '@/app/lib/exercises'
+import { swalTheme } from '@/app/lib/swalConfig'
 
 type PanelKey = 'sidebar' | 'schema' | 'query' | 'results' | 'exercises'
 
@@ -55,19 +56,14 @@ export default function Home() {
         e.preventDefault()
         if (isDirty()) {
           import('sweetalert2').then(({ default: Swal }) => {
-            Swal.fire({
+            Swal.fire(swalTheme({
               title: '¿Recargar?',
               text: 'Los cambios no guardados se perderán.',
               icon: 'warning',
               showCancelButton: true,
               confirmButtonText: 'Recargar',
               cancelButtonText: 'Cancelar',
-              reverseButtons: true,
-              background: '#2d2d2d',
-              color: '#d4d4d4',
-              confirmButtonColor: '#0e639c',
-              cancelButtonColor: '#6c6c6c',
-            }).then((r) => { if (r.isConfirmed) location.reload() })
+            })).then((r) => { if (r.isConfirmed) location.reload() })
           })
         } else {
           location.reload()
@@ -81,13 +77,7 @@ export default function Home() {
   const toggle = (key: PanelKey) =>
     setVisible((prev) => ({ ...prev, [key]: !prev[key] }))
 
-  const swalBase = () => ({
-    background: '#2d2d2d',
-    color: '#d4d4d4',
-    confirmButtonColor: '#0e639c',
-    cancelButtonColor: '#6c6c6c',
-    reverseButtons: true,
-  })
+  const swalBase = () => swalTheme()
 
   const saveProject = async () => {
     const { default: Swal } = await import('sweetalert2')

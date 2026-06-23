@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import { PGlite } from '@electric-sql/pglite'
 import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
 import type { ExerciseFeedback } from '@/app/lib/exercises'
+import { swalTheme } from '@/app/lib/swalConfig'
 export interface ColumnInfo {
   column_name: string
   data_type: string
@@ -711,15 +712,12 @@ export function DBProvider({ children }: { children: ReactNode }) {
         console.error('restore error:', e)
         setSchemaError('Error al restaurar proyecto: ' + (e as Error).message)
         import('sweetalert2').then(({ default: Swal }) => {
-          Swal.fire({
+          Swal.fire(swalTheme({
             icon: 'error',
             title: 'Error al restaurar proyecto',
             text: (e as Error).message,
             confirmButtonText: 'OK',
-            background: '#2d2d2d',
-            color: '#d4d4d4',
-            confirmButtonColor: '#0e639c',
-          })
+          }))
         })
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')

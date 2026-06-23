@@ -7,6 +7,7 @@ import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 import Button from '@/app/components/ui/Button'
 import Badge from '@/app/components/ui/Badge'
+import { swalTheme } from '@/app/lib/swalConfig'
 
 export default function QueryEditor() {
   const {
@@ -96,21 +97,15 @@ export default function QueryEditor() {
       closeQueryTab(tabId)
       return
     }
-    const isLight = document.documentElement.getAttribute('data-theme') === 'light'
     const { default: Swal } = await import('sweetalert2')
-    const result = await Swal.fire({
+    const result = await Swal.fire(swalTheme({
       title: '¿Cerrar pestaña?',
       text: `Se perderá el contenido de "${tab.name}".`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Cerrar',
       cancelButtonText: 'Cancelar',
-      reverseButtons: true,
-      background: isLight ? '#fff' : '#2d2d2d',
-      color: isLight ? '#1f2937' : '#d4d4d4',
-      confirmButtonColor: '#0e639c',
-      cancelButtonColor: isLight ? '#9ca3af' : '#6c6c6c',
-    })
+    }))
     if (result.isConfirmed) closeQueryTab(tabId)
   }
 

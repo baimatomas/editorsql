@@ -9,6 +9,7 @@ import {
   removeSessionProject, promptSaveIfDirty, clearDirty,
   type ProjectData,
 } from '@/app/lib/projectFiles'
+import { swalTheme } from '@/app/lib/swalConfig'
 
 type CtxTarget =
   | { kind: 'table'; schema: string; table: ObjectInfo }
@@ -118,7 +119,7 @@ export default function TableBrowser() {
         localStorage.removeItem('editorsql_restore_data')
       } catch (e) {
         const { default: Swal } = await import('sweetalert2')
-        await Swal.fire({ icon: 'error', title: 'Error', text: 'Error al cargar proyecto: ' + (e as Error).message, confirmButtonText: 'OK', background: '#2d2d2d', color: '#d4d4d4', confirmButtonColor: '#0e639c' })
+        await Swal.fire(swalTheme({ icon: 'error', title: 'Error', text: 'Error al cargar proyecto: ' + (e as Error).message, confirmButtonText: 'OK' }))
         return
       }
     } else {
