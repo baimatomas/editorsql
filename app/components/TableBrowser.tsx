@@ -125,7 +125,6 @@ export default function TableBrowser() {
         localStorage.setItem('editorsql_load_default', name)
         localStorage.setItem('editorsql_current_project', name)
         localStorage.setItem('editorsql_schema', `-- Proyecto: ${name}\n-- Base de datos cargada desde archivo\n-- Usá este panel para crear y modificar tablas (CREATE TABLE, INSERT, ALTER, etc.)`)
-        localStorage.setItem('editorsql_query_tabs', JSON.stringify([{ id: crypto.randomUUID(), name: 'Query1', sql: '-- Ejecutá las consultas con Ctrl + Enter\n' }]))
         localStorage.setItem('editorsql_saved_queries', '[]')
         localStorage.removeItem('editorsql_restore_flag')
         localStorage.removeItem('editorsql_restore_data')
