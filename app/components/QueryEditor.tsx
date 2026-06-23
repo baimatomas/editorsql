@@ -88,6 +88,14 @@ export default function QueryEditor() {
       closeQueryTab(tabId)
       return
     }
+    const onlyComments = tab.sql.split('\n').every(line => {
+      const t = line.trim()
+      return t === '' || t.startsWith('--')
+    })
+    if (onlyComments) {
+      closeQueryTab(tabId)
+      return
+    }
     const isLight = document.documentElement.getAttribute('data-theme') === 'light'
     const { default: Swal } = await import('sweetalert2')
     const result = await Swal.fire({

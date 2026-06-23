@@ -71,7 +71,7 @@ function validateImportData(json: unknown, currentProject: string): { valid: boo
 }
 
 export default function ExercisePanel() {
-  const { gradeQuery, queryResult, addQueryTab } = useDB()
+  const { gradeQuery, queryResult, addQueryTab, queryTabs, setActiveTabId } = useDB()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [feedback, setFeedback] = useState<ExerciseFeedback | null>(null)
@@ -132,7 +132,12 @@ export default function ExercisePanel() {
     setFeedback(null)
     setShowHint(false)
     setEditingExercise(null)
-    addQueryTab(ex.title, `-- ========================================\n-- Ejercicio: ${ex.title}\n-- ========================================\n-- Escribí acá tu consulta y presioná Ctrl+Enter\n-- Luego hacé clic en "Corregir" en el panel de Ejercicios\n`)
+    const existing = queryTabs.find(t => t.name === ex.title)
+    if (existing) {
+      setActiveTabId(existing.id)
+    } else {
+      addQueryTab(ex.title, `-- ========================================\n-- Ejercicio: ${ex.title}\n-- ========================================\n-- Escribí acá tu consulta y presioná Ctrl+Enter\n-- Luego hacé clic en "Corregir" en el panel de Ejercicios\n`)
+    }
   }
 
   const handleGrade = async () => {
