@@ -1,8 +1,10 @@
 'use client'
 
+import { Shield, ShieldOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { FilePlus, Save, SaveAll, FolderOpen, Sun, Moon } from 'lucide-react'
 import Button from '@/app/components/ui/Button'
+import AdminLogin from '@/app/components/AdminLogin'
 
 export type PanelKey = 'sidebar' | 'schema' | 'query' | 'results' | 'exercises'
 
@@ -32,13 +34,27 @@ export default function Header({
   exercisesAvailable: boolean
 }) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
+  const [showAdminLogin, setShowAdminLogin] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('editorsql_theme') as 'dark' | 'light' | null
     const t = stored === 'light' ? 'light' : 'dark'
     setTheme(t)
     document.documentElement.setAttribute('data-theme', t)
+    setIsAdmin(!!localStorage.getItem('editorsql_admin_token'))
   }, [])
+
+  const handleAdminLogin = (token: string) => {
+    localStorage.setItem('editorsql_admin_token', token)
+    setIsAdmin(true)
+    setShowAdminLogin(false)
+  }
+
+  const handleAdminLogout = () => {
+    localStorage.removeItem('editorsql_admin_token')
+    setIsAdmin(false)
+  }
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -129,8 +145,32 @@ export default function Header({
             <FolderOpen size={13} />
             Abrir
           </Button>
+          <div className="border-l border-white/10 h-5 mx-1" />
+          {isAdmin ? (
+            <div className="relative group">
+              <Button
+                variant="tab-active"
+                onClick={handleAdminLogout}
+                className="text-emerald-300 border-emerald-500"
+              >
+                <Shield size={13} />
+                Admin
+              </Button>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-1 rounded bg-surface-card border border-surface-border text-[10px] text-txt-muted whitespace-nowrap shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none">
+                Cerrar sesión docente
+              </div>
+            </div>
+          ) : (
+            <Button variant="toolbar" onClick={() => setShowAdminLogin(true)}>
+              <ShieldOff size={13} />
+              Admin
+            </Button>
+          )}
         </div>
       </div>
+      {showAdminLogin && (
+        <AdminLogin onLogin={handleAdminLogin} onClose={() => setShowAdminLogin(false)} />
+      )}
     </header>
   )
 }
