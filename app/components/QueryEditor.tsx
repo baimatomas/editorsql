@@ -5,6 +5,7 @@ import Editor, { type OnMount } from '@monaco-editor/react'
 import { Play, X } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
+import { splitSqlStatementsDetailed, hasRealSql } from '@/app/lib/sqlStatements'
 import Button from '@/app/components/ui/Button'
 import Badge from '@/app/components/ui/Badge'
 import { swalTheme } from '@/app/lib/swalConfig'
@@ -40,6 +41,15 @@ export default function QueryEditor() {
     }
   }, [renamingId])
 
+  const getStatementAtOffset = (sql: string, offset: number): string => {
+    const parts = splitSqlStatementsDetailed(sql).filter(p => hasRealSql(p.text))
+    const containing = parts.find(p => offset >= p.start && offset <= p.end)
+    if (containing) return containing.text
+    const next = parts.find(p => p.start >= offset)
+    if (next) return next.text
+    return parts.length > 0 ? parts[parts.length - 1].text : sql.trim()
+  }
+
   const getSqlToRun = () => {
     const editor = editorRef.current
     if (editor) {
@@ -48,6 +58,13 @@ export default function QueryEditor() {
       if (selection && model && !selection.isEmpty()) {
         const selected = model.getValueInRange(selection).trim()
         if (selected) return selected
+      }
+      const sql = currentSqlRef.current
+      const position = editor.getPosition()
+      if (sql.trim() && position && model) {
+        const offset = model.getOffsetAt(position)
+        const stmt = getStatementAtOffset(sql, offset)
+        if (stmt) return stmt
       }
     }
     return currentSqlRef.current

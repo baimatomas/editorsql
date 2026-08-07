@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
-import { splitSqlStatements } from '@/app/lib/sqlStatements'
+import { splitSqlStatements, hasRealSql } from '@/app/lib/sqlStatements'
 import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
 import type { ExerciseFeedback } from '@/app/lib/exercises'
 import { swalTheme } from '@/app/lib/swalConfig'
@@ -445,7 +445,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const trimmed = sql.trim()
       if (!trimmed) return
 
-      const statements = splitSqlStatements(trimmed)
+      const statements = splitSqlStatements(trimmed).filter(s => hasRealSql(s))
       if (statements.length === 0) return
 
       const isQueryStmt = (s: string) => {

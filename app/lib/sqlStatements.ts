@@ -1,8 +1,24 @@
-export function splitSqlStatements(sql: string): string[] {
-  const statements: string[] = []
+export interface SqlStatement {
+  text: string
+  start: number
+  end: number
+}
+
+export function splitSqlStatementsDetailed(sql: string): SqlStatement[] {
+  const statements: SqlStatement[] = []
   let current = ''
+  let currentStart = 0
   let i = 0
   const n = sql.length
+
+  const pushStatement = () => {
+    const trimmed = current.trim()
+    if (trimmed) {
+      const start = currentStart + current.indexOf(trimmed)
+      statements.push({ text: trimmed, start, end: start + trimmed.length })
+    }
+    current = ''
+  }
 
   while (i < n) {
     const ch = sql[i]
@@ -93,8 +109,7 @@ export function splitSqlStatements(sql: string): string[] {
 
     // Statement separator
     if (ch === ';') {
-      if (current.trim()) statements.push(current.trim())
-      current = ''
+      pushStatement()
       i++
       continue
     }
@@ -103,6 +118,17 @@ export function splitSqlStatements(sql: string): string[] {
     i++
   }
 
-  if (current.trim()) statements.push(current.trim())
+  pushStatement()
   return statements
+}
+
+export function splitSqlStatements(sql: string): string[] {
+  return splitSqlStatementsDetailed(sql).map(s => s.text)
+}
+
+export function hasRealSql(text: string): boolean {
+  const noComments = text
+    .replace(/--.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+  return noComments.trim().length > 0
 }
