@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { PGlite } from '@electric-sql/pglite'
+import { splitSqlStatements } from '@/app/lib/sqlStatements'
 import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
 import type { ExerciseFeedback } from '@/app/lib/exercises'
 import { swalTheme } from '@/app/lib/swalConfig'
@@ -444,45 +445,66 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const trimmed = sql.trim()
       if (!trimmed) return
 
-      const cleaned = trimmed.replace(/;+\s*$/, '').trim()
-      const hasExplicitLimit = /\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i.test(cleaned)
+      const statements = splitSqlStatements(trimmed)
+      if (statements.length === 0) return
 
-      const noComments = trimmed
-        .replace(/--.*$/gm, '')
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .trim()
-      const firstWord = noComments.split(/\s+/)[0]?.toUpperCase()
-      const isQuery = ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE'].includes(firstWord)
+      const isQueryStmt = (s: string) => {
+        const noComments = s
+          .replace(/--.*$/gm, '')
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          .trim()
+        const firstWord = noComments.split(/\s+/)[0]?.toUpperCase()
+        return ['SELECT', 'WITH', 'EXPLAIN', 'SHOW', 'DESCRIBE'].includes(firstWord)
+      }
 
       setLoading(true)
       const start = performance.now()
       try {
-        if (isQuery) {
-          if (hasExplicitLimit) {
-            execSqlRef.current = ''
-            setTotalRowCount(0)
-            const result = await db.query(cleaned)
-            setQueryResult(result.rows as unknown[])
-          } else {
-            execSqlRef.current = cleaned
-            let total = 0
-            try {
-              const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${cleaned}) AS _p`)
-              total = Number((cnt.rows[0] as Record<string, unknown>).cnt)
-            } catch {
-              total = 0
+        let lastQueryResult: unknown[] | null = null
+        let lastQuerySql = ''
+        let lastTotal = 0
+        let lastHadExplicitLimit = false
+        let refreshNeeded = false
+
+        for (let idx = 0; idx < statements.length; idx++) {
+          const stmt = statements[idx]
+          try {
+            if (isQueryStmt(stmt)) {
+              const hasExplicitLimit = /\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i.test(stmt)
+              if (hasExplicitLimit) {
+                const result = await db.query(stmt)
+                lastQueryResult = result.rows as unknown[]
+                lastTotal = 0
+              } else {
+                try {
+                  const cnt = await db.query(`SELECT COUNT(*) AS cnt FROM (${stmt}) AS _p`)
+                  lastTotal = Number((cnt.rows[0] as Record<string, unknown>).cnt)
+                } catch {
+                  lastTotal = 0
+                }
+                const result = await db.query(`${stmt} LIMIT ${PAGE_SIZE} OFFSET 0`)
+                lastQueryResult = result.rows as unknown[]
+              }
+              lastQuerySql = stmt
+              lastHadExplicitLimit = hasExplicitLimit
+            } else {
+              refreshNeeded = true
+              await db.exec(stmt)
             }
-            setTotalRowCount(total)
-            const result = await db.query(`${cleaned} LIMIT ${PAGE_SIZE} OFFSET 0`)
-            setQueryResult(result.rows as unknown[])
+          } catch (e) {
+            const err = e as Error
+            throw new Error(
+              statements.length > 1
+                ? `Error en la consulta ${idx + 1}: ${err.message}`
+                : err.message
+            )
           }
-        } else {
-          execSqlRef.current = ''
-          setTotalRowCount(0)
-          await db.exec(trimmed)
-          setQueryResult([])
-          await refreshTables()
         }
+
+        execSqlRef.current = lastHadExplicitLimit ? '' : lastQuerySql
+        setTotalRowCount(lastTotal)
+        setQueryResult(lastQueryResult ?? [])
+        if (refreshNeeded) await refreshTables()
         setQueryTime(performance.now() - start)
         setLoading(false)
       } catch (e) {

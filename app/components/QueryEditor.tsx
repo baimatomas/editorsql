@@ -40,13 +40,26 @@ export default function QueryEditor() {
     }
   }, [renamingId])
 
+  const getSqlToRun = () => {
+    const editor = editorRef.current
+    if (editor) {
+      const selection = editor.getSelection()
+      const model = editor.getModel()
+      if (selection && model && !selection.isEmpty()) {
+        const selected = model.getValueInRange(selection).trim()
+        if (selected) return selected
+      }
+    }
+    return currentSqlRef.current
+  }
+
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
     editor.addAction({
       id: 'run-query',
       label: 'Ejecutar Query',
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-      run: () => { runRef.current(currentSqlRef.current) },
+      run: () => { runRef.current(getSqlToRun()) },
     })
     disposeRef.current?.dispose()
     disposeRef.current = registerSQLCompletion(monaco, schemasRef)
@@ -81,7 +94,7 @@ export default function QueryEditor() {
     return () => observer.disconnect()
   }, [])
 
-  const handleRun = () => { runRef.current(currentSqlRef.current) }
+  const handleRun = () => { runRef.current(getSqlToRun()) }
 
   const handleCloseTab = async (tabId: string) => {
     const tab = queryTabs.find(t => t.id === tabId)
