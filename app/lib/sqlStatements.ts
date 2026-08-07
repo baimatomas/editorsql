@@ -111,6 +111,7 @@ export function splitSqlStatementsDetailed(sql: string): SqlStatement[] {
     if (ch === ';') {
       pushStatement()
       i++
+      currentStart = i
       continue
     }
 
