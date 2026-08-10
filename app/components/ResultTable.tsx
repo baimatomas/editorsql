@@ -9,6 +9,24 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 export default function ResultTable() {
   const { queryResult, queryError, queryTime, loading, totalRowCount, currentPage, pageSize, setPage } = useDB()
 
+  const [fontSize, setFontSize] = useState(13)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('editorsql_results_font_size')
+      const parsed = stored ? parseInt(stored, 10) : NaN
+      if (Number.isFinite(parsed) && parsed >= 8 && parsed <= 32) setFontSize(parsed)
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleFontSize = (delta: number) => {
+    setFontSize(prev => {
+      const next = Math.min(32, Math.max(8, prev + delta))
+      try { localStorage.setItem('editorsql_results_font_size', String(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col h-full">
@@ -100,6 +118,18 @@ export default function ResultTable() {
       <Toolbar>
         <span className="text-xs font-medium text-txt-dim uppercase tracking-wider">Resultados</span>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleFontSize(-1)}
+              className="flex items-center justify-center w-6 h-6 rounded-md text-sm font-bold text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border transition-colors"
+              title="Reducir fuente"
+            >−</button>
+            <button
+              onClick={() => handleFontSize(1)}
+              className="flex items-center justify-center w-6 h-6 rounded-md text-sm font-bold text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border transition-colors"
+              title="Agrandar fuente"
+            >+</button>
+          </div>
           {queryTime !== null && (
             <span className="text-[10px] text-txt-dim">{queryTime.toFixed(1)} ms</span>
           )}
@@ -110,10 +140,10 @@ export default function ResultTable() {
         </div>
       </Toolbar>
       <div className="flex-1 overflow-auto">
-        <table className="w-full text-xs border-collapse">
+        <table className="w-full text-xs border-collapse" style={{ fontSize: `${fontSize}px` }}>
           <thead>
             <tr className="bg-surface-card sticky top-0 shadow-sm z-10">
-              <th className="px-2 py-1.5 text-right text-txt-dim font-mono text-[10px] border-b border-surface-border w-10 select-none">#</th>
+              <th className="px-2 py-1.5 text-right text-txt-dim font-mono border-b border-surface-border w-10 select-none">#</th>
               {columns.map((col) => (
                 <th
                   key={col}
@@ -139,7 +169,7 @@ export default function ResultTable() {
                 key={i}
                 className={`${i % 2 === 0 ? 'bg-surface' : 'bg-surface-card'} hover:bg-institutional-500/10 transition-all duration-150 cursor-default`}
               >
-                <td className="px-2 py-1 text-right text-txt-dim font-mono text-[10px] border-b border-surface-border/40 select-none">{currentPage * pageSize + i + 1}</td>
+                <td className="px-2 py-1 text-right text-txt-dim font-mono border-b border-surface-border/40 select-none">{currentPage * pageSize + i + 1}</td>
                 {columns.map((col) => (
                   <td
                     key={col}
