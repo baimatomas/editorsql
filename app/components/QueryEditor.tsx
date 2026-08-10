@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
-import { Play, X } from 'lucide-react'
+import { Play, X, ListChecks } from 'lucide-react'
 import { useDB } from '@/app/providers'
 import { registerSQLCompletion } from '@/app/lib/sqlCompletion'
 import { splitSqlStatementsDetailed, hasRealSql } from '@/app/lib/sqlStatements'
@@ -100,6 +100,24 @@ export default function QueryEditor() {
 
   const [monacoTheme, setMonacoTheme] = useState<'vs-dark' | 'vs'>('vs-dark')
 
+  const [fontSize, setFontSize] = useState(13)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('editorsql_font_size')
+      const parsed = stored ? parseInt(stored, 10) : NaN
+      if (Number.isFinite(parsed) && parsed >= 8 && parsed <= 32) setFontSize(parsed)
+    } catch { /* ignore */ }
+  }, [])
+
+  const handleFontSize = (delta: number) => {
+    setFontSize(prev => {
+      const next = Math.min(32, Math.max(8, prev + delta))
+      try { localStorage.setItem('editorsql_font_size', String(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
+
   useEffect(() => {
     const t = document.documentElement.getAttribute('data-theme')
     setMonacoTheme(t === 'light' ? 'vs' : 'vs-dark')
@@ -112,6 +130,8 @@ export default function QueryEditor() {
   }, [])
 
   const handleRun = () => { runRef.current(getSqlToRun()) }
+
+  const handleRunAll = () => { runRef.current(currentSqlRef.current) }
 
   const handleCloseTab = async (tabId: string) => {
     const tab = queryTabs.find(t => t.id === tabId)
@@ -203,10 +223,26 @@ export default function QueryEditor() {
           title="Nueva pestaña"
         >+</button>
         <div className="flex-1" />
-        <div className="flex items-center px-2">
+        <div className="flex items-center px-2 gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleFontSize(-1)}
+              className="flex items-center justify-center w-6 h-6 rounded-md text-sm font-bold text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border transition-colors"
+              title="Reducir fuente"
+            >−</button>
+            <button
+              onClick={() => handleFontSize(1)}
+              className="flex items-center justify-center w-6 h-6 rounded-md text-sm font-bold text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border transition-colors"
+              title="Agrandar fuente"
+            >+</button>
+          </div>
           <Button variant="primary" onClick={handleRun} disabled={!ready || !currentSqlRef.current?.trim() || loading}>
             <Play size={13} />
             {loading ? 'Ejecutando...' : 'Ejecutar'}
+          </Button>
+          <Button variant="success" onClick={handleRunAll} disabled={!ready || !currentSqlRef.current?.trim() || loading}>
+            <ListChecks size={13} />
+            Ejecutar todo
           </Button>
         </div>
       </div>
@@ -223,7 +259,7 @@ export default function QueryEditor() {
           onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },
-            fontSize: 12,
+            fontSize,
             lineNumbers: 'on',
             scrollBeyondLastLine: false,
             wordWrap: 'on',

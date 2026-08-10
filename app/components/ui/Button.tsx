@@ -2,13 +2,14 @@
 
 import { type ButtonHTMLAttributes, forwardRef } from 'react'
 
-type Variant = 'toolbar' | 'tab' | 'tab-active' | 'primary' | 'secondary' | 'ghost' | 'icon'
+type Variant = 'toolbar' | 'tab' | 'tab-active' | 'primary' | 'secondary' | 'ghost' | 'icon' | 'success'
 
 const variants: Record<Variant, string> = {
   toolbar:    'text-gray-400 hover:text-white hover:bg-white/10 active:bg-white/15 px-2',
   tab:        'text-gray-500 hover:text-gray-300 px-2.5 border-b-2 border-transparent',
   'tab-active':'text-white border-b-2 border-institutional-400 bg-institutional-700/40 px-2.5',
   primary:    'bg-institutional-600 hover:bg-institutional-500 active:bg-institutional-700 text-white shadow-sm px-3',
+  success:    'bg-green-600 hover:bg-green-500 active:bg-green-700 text-white shadow-sm px-3',
   secondary:  'bg-surface-hover hover:bg-surface-border active:bg-surface-elevated text-txt-muted px-3',
   ghost:      'text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border px-2',
   icon:       'text-txt-dim hover:text-txt-body hover:bg-surface-hover active:bg-surface-border px-1.5',

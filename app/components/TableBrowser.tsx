@@ -32,7 +32,7 @@ function CtxItem({ onClick, children }: { onClick: () => void; children: React.R
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-3 py-1.5 text-[12px] text-txt-body hover:bg-institutional-500/15 transition-colors duration-75"
+      className="w-full text-left px-3 py-1.5 text-[13px] text-txt-body hover:bg-institutional-500/15 transition-colors duration-75"
     >
       {children}
     </button>
@@ -42,12 +42,12 @@ function CtxItem({ onClick, children }: { onClick: () => void; children: React.R
 function CtxSubItem({ label, open, onEnter, children }: { label: string; open: boolean; onEnter: () => void; children: React.ReactNode }) {
   return (
     <div className="relative" onMouseEnter={onEnter}>
-      <div className="w-full text-left px-3 py-1.5 text-[12px] text-txt-body hover:bg-institutional-500/15 transition-colors duration-75 flex items-center justify-between">
+      <div className="w-full text-left px-3 py-1.5 text-[13px] text-txt-body hover:bg-institutional-500/15 transition-colors duration-75 flex items-center justify-between">
         {label}
         <ChevronRight className="w-3 h-3 text-txt-dim" />
       </div>
       {open && (
-        <div className="absolute left-full top-0 min-w-[180px] rounded-lg border border-surface-border bg-surface-card shadow-xl py-1 text-xs z-50">
+        <div className="absolute left-full top-0 min-w-[180px] rounded-lg border border-surface-border bg-surface-card shadow-xl py-1 text-[13px] z-50">
           {children}
         </div>
       )}
@@ -378,19 +378,19 @@ export default function TableBrowser() {
 
   if (!ready) {
     return (
-      <div className="p-4 text-xs text-gray-500">
+      <div className="p-4 text-[13px] text-gray-500">
         Inicializando PostgreSQL...
       </div>
     )
   }
 
   return (
-    <div className="py-2 text-xs">
+    <div className="py-2 text-[13px]">
       {/* Project switcher */}
       <div className="relative px-3 pb-2 mb-2 border-b border-surface-border" ref={switcherRef}>
         <button
           onClick={() => setSwitcherOpen(!switcherOpen)}
-          className="flex items-center w-full text-xs text-institutional-400 font-semibold gap-1.5 hover:bg-surface-hover px-1.5 py-1 rounded transition-colors duration-100"
+          className="flex items-center w-full text-[13px] text-institutional-400 font-semibold gap-1.5 hover:bg-surface-hover px-1.5 py-1 rounded transition-colors duration-100"
         >
           <FolderKanban size={14} className="flex-shrink-0 text-institutional-400" />
           <span className="flex-1 truncate text-left">{projectName || 'Sin proyecto'}</span>
@@ -399,7 +399,7 @@ export default function TableBrowser() {
 
         {switcherOpen && (
           <div className="absolute left-0 right-3 top-full mt-1 bg-surface-elevated border border-surface-border rounded shadow-lg z-50 max-h-80 overflow-y-auto animate-fade-in">
-            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest flex items-center justify-between">
+            <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest flex items-center justify-between">
               <span>Proyectos de ejemplo</span>
               <div className="flex items-center gap-1">
                 <button onClick={handleRefreshProjects} className="text-txt-dim hover:text-txt-body transition-colors" title="Refrescar proyectos">
@@ -414,7 +414,7 @@ export default function TableBrowser() {
             </div>
             {exampleProjects.map((p) => (
               <div key={p.name}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
+                className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
                 onClick={() => { if (!editingProject) switchToProject(p.name) }}
               >
                 <FolderKanban size={14} className="text-institutional-400 flex-shrink-0" />
@@ -437,31 +437,31 @@ export default function TableBrowser() {
 
             {editingProject && (
               <div className="px-3 py-2 border-t border-surface-border space-y-2">
-                <div className="text-[10px] font-semibold text-txt-dim uppercase tracking-wider">
+                <div className="text-[11px] font-semibold text-txt-dim uppercase tracking-wider">
                   {editingProject.name ? 'Editar proyecto' : 'Nuevo proyecto'}
                 </div>
                 <div>
-                  <label className="text-[10px] text-txt-dim block mb-0.5">Label</label>
+                  <label className="text-[11px] text-txt-dim block mb-0.5">Label</label>
                   <input type="text" value={editingProject.label}
                     onChange={(e) => setEditingProject({ ...editingProject, label: e.target.value })}
-                    className="w-full px-2 py-1 text-[11px] rounded border border-surface-border bg-surface text-txt-body focus:outline-none focus:border-institutional-500"
+                    className="w-full px-2 py-1 text-[12px] rounded border border-surface-border bg-surface text-txt-body focus:outline-none focus:border-institutional-500"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-txt-dim block mb-0.5">
+                  <label className="text-[11px] text-txt-dim block mb-0.5">
                     {editingProject.name ? 'Archivo .sql (dejar vacío para mantener el actual)' : 'Archivo .sql'}
                   </label>
                   <input type="file" accept=".sql" ref={fileInputRef}
-                    className="w-full text-[11px] text-txt-muted file:mr-2 file:py-1 file:px-2.5 file:border file:border-surface-border file:rounded file:text-[11px] file:bg-surface file:text-txt-body hover:file:bg-surface-hover"
+                    className="w-full text-[12px] text-txt-muted file:mr-2 file:py-1 file:px-2.5 file:border file:border-surface-border file:rounded file:text-[12px] file:bg-surface file:text-txt-body hover:file:bg-surface-hover"
                   />
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleSaveProject} disabled={!editingProject.label.trim()}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded bg-institutional-600 text-white hover:bg-institutional-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                    className="flex items-center gap-1 px-2.5 py-1 text-[12px] rounded bg-institutional-600 text-white hover:bg-institutional-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                     <Save size={11} /> Guardar
                   </button>
                   <button onClick={() => { setEditingProject(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] rounded border border-surface-border text-txt-dim hover:text-txt-body transition-colors">
+                    className="flex items-center gap-1 px-2.5 py-1 text-[12px] rounded border border-surface-border text-txt-dim hover:text-txt-body transition-colors">
                     <X size={11} /> Cancelar
                   </button>
                 </div>
@@ -470,18 +470,18 @@ export default function TableBrowser() {
 
             <div className="border-t border-surface-border my-1" />
 
-            <div className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+            <div className="px-3 py-1.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
               Mis proyectos
             </div>
             {sessionProjects.filter(n => !exampleProjects.some(p => p.name === n) && !DEFAULT_PROJECTS.includes(n)).length === 0 ? (
-              <div className="px-3 py-2 text-[11px] text-gray-500">
+              <div className="px-3 py-2 text-[12px] text-gray-500">
                 No hay proyectos en la sesión
               </div>
             ) : (
               sessionProjects.filter(n => !exampleProjects.some(p => p.name === n) && !DEFAULT_PROJECTS.includes(n)).map((name) => (
                 <div
                   key={name}
-                  className="flex items-center gap-2 px-3 py-1.5 text-xs text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
+                  className="flex items-center gap-2 px-3 py-1.5 text-[13px] text-txt-muted hover:bg-surface-hover cursor-pointer group transition-colors duration-100"
                   onClick={() => switchToProject(name)}
                 >
                   <FolderOpen size={14} className="text-gray-500 flex-shrink-0" />
@@ -513,7 +513,7 @@ export default function TableBrowser() {
           return (
             <div key={s.schema_name} className="mb-1">
               {/* Schema header */}
-              <div className="flex items-center w-full text-xs text-txt-muted font-medium group">
+              <div className="flex items-center w-full text-[13px] text-txt-muted font-medium group">
                 <button
                   onClick={() => toggle(schemaKey)}
                   className="flex items-center flex-1 text-left px-3 py-1 hover:bg-surface-hover transition-colors duration-100"
@@ -536,7 +536,7 @@ export default function TableBrowser() {
                   {/* Tables */}
                   {totalTables > 0 && (
                     <div className="mb-1">
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                         Tablas{' '}<span className="text-gray-600 font-normal normal-case tracking-normal">({totalTables})</span>
                       </div>
                       {s.tables.map((t) => {
@@ -547,7 +547,7 @@ export default function TableBrowser() {
                             <button
                               onClick={() => { toggle(tKey); setSelectedTable(isSelected ? null : tKey) }}
                               onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ target: { kind: 'table', schema: s.schema_name, table: t }, x: e.clientX, y: e.clientY }); setCtxSub(null) }}
-                              className={`flex items-center w-full text-left px-3 py-1 text-xs transition-colors duration-100 border-l-2 ${
+                              className={`flex items-center w-full text-left px-3 py-1 text-[13px] transition-colors duration-100 border-l-2 ${
                                 isSelected
                                   ? 'border-institutional-500 bg-surface-hover/40 text-institutional-200'
                                   : 'border-transparent text-txt-muted hover:bg-surface-hover hover:border-gray-600'
@@ -560,7 +560,7 @@ export default function TableBrowser() {
                             {expanded.has(tKey) && (
                               <div className="ml-5 pl-2 border-l border-surface-border animate-fade-in">
                                 {t.columns.map((c) => (
-                                  <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px] hover:bg-surface-hover/50 transition-colors duration-75"
+                                  <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[12px] hover:bg-surface-hover/50 transition-colors duration-75"
                                     onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ target: { kind: 'column', schema: s.schema_name, table: t, column: c }, x: e.clientX, y: e.clientY }); setCtxSub(null) }}
                                   >
                                     {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
@@ -582,7 +582,7 @@ export default function TableBrowser() {
                   {/* Views */}
                   {totalViews > 0 && (
                     <div className="mb-1">
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                         Vistas{' '}<span className="text-gray-600 font-normal normal-case tracking-normal">({totalViews})</span>
                       </div>
                       {s.views.map((v) => {
@@ -592,7 +592,7 @@ export default function TableBrowser() {
                             <button
                               onClick={() => toggle(vKey)}
                               onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ target: { kind: 'view', schema: s.schema_name, view: v }, x: e.clientX, y: e.clientY }); setCtxSub(null) }}
-                              className="flex items-center w-full text-left px-3 py-1 text-xs text-txt-muted hover:bg-surface-hover hover:border-l-2 hover:border-emerald-600/50 transition-colors duration-100 border-l-2 border-transparent"
+                              className="flex items-center w-full text-left px-3 py-1 text-[13px] text-txt-muted hover:bg-surface-hover hover:border-l-2 hover:border-emerald-600/50 transition-colors duration-100 border-l-2 border-transparent"
                             >
                               {expanded.has(vKey) ? <ChevronDown size={10} className="mr-1.5 text-gray-500 flex-shrink-0" /> : <ChevronRight size={10} className="mr-1.5 text-gray-500 flex-shrink-0" />}
                               <Eye size={12} className="mr-1.5 text-emerald-500 flex-shrink-0" />
@@ -601,7 +601,7 @@ export default function TableBrowser() {
                             {expanded.has(vKey) && (
                               <div className="ml-5 pl-2 border-l border-surface-border animate-fade-in">
                                 {v.columns.map((c) => (
-                                  <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[11px]"
+                                  <div key={c.column_name} className="flex items-center gap-1 px-2 py-0.5 text-[12px]"
                                     onContextMenu={(e) => { e.preventDefault(); setCtxMenu({ target: { kind: 'column', schema: s.schema_name, table: v, column: c }, x: e.clientX, y: e.clientY }); setCtxSub(null) }}
                                   >
                                     {(() => { const Icon = typeIcon(c.data_type); return <Icon size={9} className="text-gray-500 flex-shrink-0" />; })()}
@@ -620,13 +620,13 @@ export default function TableBrowser() {
                   {/* Functions */}
                   {totalFuncs > 0 && (
                     <div>
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-semibold text-gray-500 uppercase tracking-widest">
                         Funciones{' '}<span className="text-gray-600 font-normal normal-case tracking-normal">({totalFuncs})</span>
                       </div>
                       {s.functions.map((f) => (
                         <div
                           key={f.name}
-                          className="flex items-center gap-1.5 px-6 py-0.5 text-xs text-txt-muted hover:bg-surface-hover transition-colors duration-100"
+                          className="flex items-center gap-1.5 px-6 py-0.5 text-[13px] text-txt-muted hover:bg-surface-hover transition-colors duration-100"
                         >
                           <FunctionSquare size={12} className="text-violet-500 flex-shrink-0" />
                           <span className="text-violet-400">{f.name}()</span>
@@ -649,13 +649,13 @@ export default function TableBrowser() {
         <>
           <div className="fixed inset-0 z-40" onClick={ctxClose} />
           <div
-            className="fixed z-50 min-w-[190px] rounded-lg border border-surface-border bg-surface-card shadow-xl py-1 text-xs"
+            className="fixed z-50 min-w-[190px] rounded-lg border border-surface-border bg-surface-card shadow-xl py-1 text-[13px]"
             style={{ left: ctxMenu.x, top: ctxMenu.y }}
           >
             {ctxMenu.target.kind === 'table' && (() => {
               const t = ctxMenu.target
               return (<>
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{t.table.name}</div>
+                <div className="px-3 py-1.5 text-[11px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{t.table.name}</div>
 
                 <CtxItem onClick={() => appendToActiveTab(genSelectStar(t))}>SELECT * (LIMIT 100)</CtxItem>
                 <CtxItem onClick={() => appendToActiveTab(genSelectCount(t))}>SELECT COUNT(*)</CtxItem>
@@ -695,7 +695,7 @@ export default function TableBrowser() {
             {ctxMenu.target.kind === 'view' && (() => {
               const v = ctxMenu.target
               return (<>
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{v.view.name}</div>
+                <div className="px-3 py-1.5 text-[11px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{v.view.name}</div>
                 <CtxItem onClick={() => appendToActiveTab(genViewSelectStar(v))}>SELECT * (LIMIT 100)</CtxItem>
                 <CtxItem onClick={() => appendToActiveTab(genViewSelectCount(v))}>SELECT COUNT(*)</CtxItem>
                 <div className="border-t border-surface-border my-1" />
@@ -710,7 +710,7 @@ export default function TableBrowser() {
               const t = { schema: c.schema, table: c.table }
               const colName = c.column.column_name
               return (<>
-                <div className="px-3 py-1.5 text-[10px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{c.table.name}.{colName}</div>
+                <div className="px-3 py-1.5 text-[11px] font-semibold text-txt-dim uppercase tracking-wider border-b border-surface-border mb-1">{c.table.name}.{colName}</div>
                 <CtxItem onClick={() => appendToActiveTab(genSelectColumn(t, colName))}>SELECT columna</CtxItem>
                 <CtxItem onClick={() => appendToActiveTab(genWhereColumn(t, colName))}>WHERE condición</CtxItem>
                 <CtxItem onClick={() => appendToActiveTab(genOrderByColumn(t, colName))}>ORDER BY</CtxItem>
