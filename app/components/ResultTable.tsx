@@ -27,6 +27,25 @@ export default function ResultTable() {
     })
   }
 
+  const [colWidths, setColWidths] = useState<Record<string, number>>({})
+  const dragRef = useRef<{ col: string; startX: number; startWidth: number } | null>(null)
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return
+      const diff = e.clientX - dragRef.current.startX
+      const w = Math.max(60, dragRef.current.startWidth + diff)
+      setColWidths(p => ({ ...p, [dragRef.current!.col]: w }))
+    }
+    const onMouseUp = () => { dragRef.current = null }
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+  }, [])
+
   if (loading) {
     return (
       <div className="flex flex-col h-full">
@@ -74,25 +93,6 @@ export default function ResultTable() {
   }
 
   const columns = Object.keys(queryResult[0] as Record<string, unknown>)
-
-  const [colWidths, setColWidths] = useState<Record<string, number>>({})
-  const dragRef = useRef<{ col: string; startX: number; startWidth: number } | null>(null)
-
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!dragRef.current) return
-      const diff = e.clientX - dragRef.current.startX
-      const w = Math.max(60, dragRef.current.startWidth + diff)
-      setColWidths(p => ({ ...p, [dragRef.current!.col]: w }))
-    }
-    const onMouseUp = () => { dragRef.current = null }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-  }, [])
 
   const exportCSV = () => {
     const header = columns.map((c) => `"${c}"`).join(',')
