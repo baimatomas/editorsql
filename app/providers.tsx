@@ -6,6 +6,7 @@ import { splitSqlStatements, hasRealSql } from '@/app/lib/sqlStatements'
 import { setDirty, getSessionProjectData } from '@/app/lib/projectFiles'
 import type { ExerciseFeedback } from '@/app/lib/exercises'
 import { swalTheme } from '@/app/lib/swalConfig'
+import { DEFAULT_PROJECTS } from '@/app/lib/projects'
 export interface ColumnInfo {
   column_name: string
   data_type: string
@@ -81,7 +82,7 @@ interface DBContextType {
   gradeQuery: (expectedSql: string) => Promise<ExerciseFeedback>
 }
 
-export const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
+export { DEFAULT_PROJECTS }
 const LS_SAVED = 'editorsql_saved_queries'
 
 const DBContext = createContext<DBContextType | null>(null)

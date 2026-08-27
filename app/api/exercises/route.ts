@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { put, list } from '@vercel/blob'
+import { put } from '@vercel/blob'
 import crypto from 'crypto'
+import { blobUrl } from '@/app/lib/blob'
 
 function verifyToken(token: string): boolean {
   if (!token) return false
@@ -21,9 +22,9 @@ function verifyToken(token: string): boolean {
 
 async function loadExercises(): Promise<Record<string, unknown[]>> {
   try {
-    const { blobs } = await list({ prefix: 'exercises.json', limit: 1 })
-    if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
+    const url = blobUrl('exercises.json')
+    if (!url) return {}
+    const res = await fetch(url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { put, list, del } from '@vercel/blob'
+import { put, del } from '@vercel/blob'
 import crypto from 'crypto'
+import { blobUrl } from '@/app/lib/blob'
 
 const INDEX_BLOB = 'projects/index.json'
 
@@ -23,9 +24,9 @@ function verifyToken(token: string): boolean {
 
 async function loadIndex(): Promise<Record<string, { label: string }>> {
   try {
-    const { blobs } = await list({ prefix: INDEX_BLOB, limit: 1 })
-    if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
+    const url = blobUrl(INDEX_BLOB)
+    if (!url) return {}
+    const res = await fetch(url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {
@@ -91,15 +92,15 @@ export async function DELETE(request: Request, { params }: { params: { name: str
 
   // Delete SQL blob
   try {
-    const { blobs } = await list({ prefix: `projects/${name}.sql`, limit: 1 })
-    if (blobs.length > 0) await del(blobs[0].url)
+    const url = blobUrl(`projects/${name}.sql`)
+    if (url) await del(url)
   } catch {}
 
   // Delete associated exercises
   try {
-    const { blobs } = await list({ prefix: 'exercises.json', limit: 1 })
-    if (blobs.length > 0) {
-      const res = await fetch(blobs[0].url, { cache: 'no-cache' })
+    const url = blobUrl('exercises.json')
+    if (url) {
+      const res = await fetch(url, { cache: 'no-cache' })
       if (res.ok) {
         const exercises: Record<string, unknown> = await res.json()
         delete exercises[name]

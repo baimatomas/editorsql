@@ -7,6 +7,8 @@ export interface ProjectEntry {
   label: string
 }
 
+export const DEFAULT_PROJECTS = ['northwind', 'dvdrental']
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

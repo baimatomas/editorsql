@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
-import { put, list } from '@vercel/blob'
+import { put } from '@vercel/blob'
 import crypto from 'crypto'
-import fs from 'fs'
-import path from 'path'
-import { slugify, type ProjectMeta, type ProjectEntry } from '@/app/lib/projects'
+import { slugify, type ProjectMeta, type ProjectEntry, DEFAULT_PROJECTS } from '@/app/lib/projects'
+import { blobUrl } from '@/app/lib/blob'
 
 const INDEX_BLOB = 'projects/index.json'
 
@@ -26,9 +25,9 @@ function verifyToken(token: string): boolean {
 
 async function loadIndex(): Promise<Record<string, ProjectMeta>> {
   try {
-    const { blobs } = await list({ prefix: INDEX_BLOB, limit: 1 })
-    if (blobs.length === 0) return {}
-    const res = await fetch(blobs[0].url, { cache: 'no-cache' })
+    const url = blobUrl(INDEX_BLOB)
+    if (!url) return {}
+    const res = await fetch(url, { cache: 'no-cache' })
     if (!res.ok) return {}
     return await res.json()
   } catch {
@@ -45,46 +44,16 @@ async function saveIndex(data: Record<string, ProjectMeta>): Promise<void> {
   })
 }
 
-async function seedBuiltIn(): Promise<Record<string, ProjectMeta>> {
-  const existing = await loadIndex()
-  if (Object.keys(existing).length > 0) return existing
-
-  const projectsDir = path.join(process.cwd(), 'public', 'projects')
-  let seeded: Record<string, ProjectMeta> = {}
-
-  try {
-    const files = fs.readdirSync(projectsDir).filter(f => f.endsWith('.sql'))
-    for (const file of files) {
-      const name = path.parse(file).name
-      const label = name.charAt(0).toUpperCase() + name.slice(1)
-      const filePath = path.join(projectsDir, file)
-      const sql = fs.readFileSync(filePath, 'utf-8')
-      const blob = await put(`projects/${name}.sql`, sql, {
-        access: 'public',
-        contentType: 'text/plain',
-        addRandomSuffix: false,
-        allowOverwrite: true,
-      })
-      seeded[name] = { label }
-    }
-  } catch {
-    // no built-in projects directory
-  }
-
-  if (Object.keys(seeded).length > 0) {
-    await saveIndex(seeded)
-    return seeded
-  }
-
-  return existing
-}
-
 export async function GET() {
-  const index = await seedBuiltIn()
-  const projects: ProjectEntry[] = Object.entries(index).map(([name, meta]) => ({
+  const index = await loadIndex()
+  const projects: ProjectEntry[] = DEFAULT_PROJECTS.map((name) => ({
     name,
-    label: meta.label,
+    label: name.charAt(0).toUpperCase() + name.slice(1),
   }))
+  for (const [name, meta] of Object.entries(index)) {
+    if (DEFAULT_PROJECTS.includes(name)) continue
+    projects.push({ name, label: meta.label })
+  }
   return NextResponse.json({ projects }, {
     headers: { 'Cache-Control': 'no-store, max-age=0' },
   })
