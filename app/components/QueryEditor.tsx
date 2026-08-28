@@ -25,6 +25,7 @@ export default function QueryEditor() {
   const schemasRef = useRef(schemas)
   const disposeRef = useRef<{ dispose: () => void } | null>(null)
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null)
+  const editorValueRef = useRef('')
   const [cursorLine, setCursorLine] = useState(1)
   const [cursorCol, setCursorCol] = useState(1)
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -72,6 +73,7 @@ export default function QueryEditor() {
 
   const handleEditorMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor
+    editorValueRef.current = editor.getValue()
     editor.addAction({
       id: 'run-query',
       label: 'Ejecutar Query',
@@ -176,6 +178,15 @@ export default function QueryEditor() {
     if (e.key === 'Escape') setRenamingId(null)
   }
 
+  // Push external sql changes (e.g. "append" from the table browser) into the editor
+  useEffect(() => {
+    const sql = activeTab?.sql ?? ''
+    if (editorRef.current && sql !== editorValueRef.current) {
+      editorValueRef.current = sql
+      editorRef.current.setValue(sql)
+    }
+  }, [activeTab?.sql])
+
   return (
     <div className="flex flex-col h-full">
       {/* Tabs bar + Ejecutar */}
@@ -254,8 +265,11 @@ export default function QueryEditor() {
           height="100%"
           defaultLanguage="sql"
           theme={monacoTheme}
-          value={activeTab?.sql ?? ''}
-          onChange={(val) => { if (activeTab) setQueryTabSQL(activeTab.id, val ?? '') }}
+          defaultValue={activeTab?.sql ?? ''}
+          onChange={(val) => {
+            editorValueRef.current = val ?? ''
+            if (activeTab) setQueryTabSQL(activeTab.id, val ?? '')
+          }}
           onMount={handleEditorMount}
           options={{
             minimap: { enabled: false },
