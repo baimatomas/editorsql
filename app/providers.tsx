@@ -15,6 +15,11 @@ export interface ColumnInfo {
   is_primary_key?: boolean
 }
 
+export interface QueryColumn {
+  name: string
+  dataTypeID: number
+}
+
 export interface ForeignKeyInfo {
   column_name: string
   foreign_table_schema: string
@@ -59,6 +64,7 @@ interface DBContextType {
   schemaError: string | null
   queryError: string | null
   queryResult: unknown[] | null
+  queryColumns: QueryColumn[] | null
   queryTime: number | null
   loading: boolean
   runSchema: (sql: string) => Promise<void>
@@ -99,6 +105,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   const [schemas, setSchemas] = useState<SchemaInfo[]>([])
   const [schemaError, setSchemaError] = useState<string | null>(null)
   const [queryResult, setQueryResult] = useState<unknown[] | null>(null)
+  const [queryColumns, setQueryColumns] = useState<QueryColumn[] | null>(null)
   const [queryTime, setQueryTime] = useState<number | null>(null)
   const [queryError, setQueryError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -424,6 +431,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       if (!db) return
       setSchemaError(null)
       setQueryResult(null)
+      setQueryColumns(null)
       setQueryError(null)
       try {
         await db.exec(sql)
@@ -440,6 +448,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       if (!db) return
       setQueryError(null)
       setQueryResult(null)
+      setQueryColumns(null)
       setQueryTime(null)
       setCurrentPage(0)
 
@@ -462,6 +471,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       const start = performance.now()
       try {
         let lastQueryResult: unknown[] | null = null
+        let lastQueryColumns: QueryColumn[] | null = null
         let lastQuerySql = ''
         let lastTotal = 0
         let lastHadExplicitLimit = false
@@ -475,6 +485,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
               if (hasExplicitLimit) {
                 const result = await db.query(stmt)
                 lastQueryResult = result.rows as unknown[]
+                lastQueryColumns = result.fields
                 lastTotal = 0
               } else {
                 try {
@@ -485,6 +496,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
                 }
                 const result = await db.query(`${stmt} LIMIT ${PAGE_SIZE} OFFSET 0`)
                 lastQueryResult = result.rows as unknown[]
+                lastQueryColumns = result.fields
               }
               lastQuerySql = stmt
               lastHadExplicitLimit = hasExplicitLimit
@@ -505,6 +517,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
         execSqlRef.current = lastHadExplicitLimit ? '' : lastQuerySql
         setTotalRowCount(lastTotal)
         setQueryResult(lastQueryResult ?? [])
+        setQueryColumns(lastQueryColumns)
         if (refreshNeeded) await refreshTables()
         setQueryTime(performance.now() - start)
         setLoading(false)
@@ -525,6 +538,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
     try {
       const result = await db.query(`${execSqlRef.current} LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}`)
       setQueryResult(result.rows as unknown[])
+      setQueryColumns(result.fields)
       setCurrentPage(page)
       setQueryTime(performance.now() - start)
       setLoading(false)
@@ -754,7 +768,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   return (
     <DBContext.Provider
       value={{
-        ready, schemas, schemaError, queryError, queryResult, queryTime, loading,
+        ready, schemas, schemaError, queryError, queryResult, queryColumns, queryTime, loading,
         runSchema, runQuery,
         savedQueries, saveQuery, deleteQuery,
         queryTabs, activeTabId, addQueryTab, closeQueryTab, renameQueryTab, setActiveTabId, setQueryTabSQL,

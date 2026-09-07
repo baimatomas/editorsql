@@ -5,9 +5,10 @@ import { useDB } from '@/app/providers'
 import Toolbar from '@/app/components/ui/Toolbar'
 import Button from '@/app/components/ui/Button'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { formatQueryValue } from '@/app/lib/formatQueryValue'
 
 export default function ResultTable() {
-  const { queryResult, queryError, queryTime, loading, totalRowCount, currentPage, pageSize, setPage } = useDB()
+  const { queryResult, queryColumns, queryError, queryTime, loading, totalRowCount, currentPage, pageSize, setPage } = useDB()
 
   const [fontSize, setFontSize] = useState(13)
 
@@ -100,7 +101,7 @@ export default function ResultTable() {
       columns.map((col) => {
         const val = row[col]
         if (val === null) return ''
-        return `"${String(val).replace(/"/g, '""')}"`
+        return `"${formatQueryValue(val, queryColumns?.find(field => field.name === col)).replace(/"/g, '""')}"`
       }).join(',')
     )
     const csv = [header, ...rows].join('\r\n')
@@ -179,7 +180,7 @@ export default function ResultTable() {
                     {row[col] === null ? (
                       <span className="text-txt-dim italic">NULL</span>
                     ) : (
-                      String(row[col])
+                      formatQueryValue(row[col], queryColumns?.find(field => field.name === col))
                     )}
                   </td>
                 ))}
