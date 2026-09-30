@@ -10,7 +10,12 @@
     radial-gradient(ellipse 70% 60% at 50% 110%, rgba(217, 70, 239, 0.18), transparent),
     #0b0517;
   color: #f5f3ff;
-  min-height: 100vh;
+  /* El body del editor tiene overflow:hidden (layout IDE de una pantalla).
+     El quiz es su propio contenedor de scroll para poder navegar la página. */
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior-y: none;
 }
 
 /* Blobs flotantes de fondo */
