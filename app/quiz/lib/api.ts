@@ -34,7 +34,11 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
 export async function apiQuiz<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await request(path, options)
   const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error((data as { error?: string }).error ?? `Error ${res.status}`)
+  if (!res.ok) {
+    const e = new Error((data as { error?: string }).error ?? `Error ${res.status}`) as Error & { payload?: unknown }
+    e.payload = data
+    throw e
+  }
   return data as T
 }
 
