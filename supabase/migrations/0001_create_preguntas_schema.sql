@@ -56,35 +56,26 @@ create index if not exists idx_answers_game on preguntas.answers(game_code);
 create index if not exists idx_answers_player on preguntas.answers(player_id);
 
 -- =============================================
--- RLS: los alumnos (anon) solo leen e insertan; las
--- mutaciones "de autor" van por API con service_role.
+-- Acceso: RLS DESACTIVADO en estas tablas — Realtime no entrega
+-- eventos UPDATE/DELETE sobre tablas con RLS, y el juego depende
+-- de esos eventos en vivo. El control de acceso queda en los
+-- grants de tabla (anon: solo SELECT + INSERT en players/answers;
+-- service_role: total). Sin datos sensibles expuestos: las
+-- correctas están en questions por decisión de diseño.
+-- Requiere además exponer "preguntas" en Settings → API → Exposed schemas.
 -- =============================================
-alter table preguntas.questions enable row level security;
-alter table preguntas.games    enable row level security;
-alter table preguntas.players  enable row level security;
-alter table preguntas.answers  enable row level security;
+alter table preguntas.questions disable row level security;
+alter table preguntas.games    disable row level security;
+alter table preguntas.players  disable row level security;
+alter table preguntas.answers  disable row level security;
 
--- Lectura pública (necesaria para jugar)
-create policy "questions_select" on preguntas.questions for select to anon using (true);
-create policy "games_select"     on preguntas.games    for select to anon using (true);
-create policy "players_select"   on preguntas.players  for select to anon using (true);
-create policy "answers_select"   on preguntas.answers  for select to anon using (true);
-
--- Los alumnos solo insertan jugadores y respuestas
-create policy "players_insert"  on preguntas.players for insert to anon with check (true);
-create policy "answers_insert"  on preguntas.answers for insert to anon with check (true);
-
--- =============================================
--- Grants: los roles de la API necesitan USAGE sobre el schema custom.
--- (Requiere además exponer "preguntas" en Settings → API → Exposed schemas)
--- =============================================
+-- anon (alumnos) y roles de la API pueden "entrar" al schema
 grant usage on schema preguntas to anon, authenticated, service_role;
 
 -- service_role (API routes del docente): acceso total
 grant all on all tables in schema preguntas to service_role;
 
--- anon (alumnos): select + insert de jugadores/respuestas.
--- Las policies RLS restringen a nivel de fila.
+-- anon (alumnos): select + insert de jugadores/respuestas (sin update/delete)
 grant select on all tables in schema preguntas to anon, authenticated;
 grant insert on preguntas.players, preguntas.answers to anon, authenticated;
 
@@ -94,8 +85,13 @@ alter default privileges in schema preguntas grant select on tables to anon, aut
 alter default privileges in schema preguntas grant insert on tables to anon, authenticated;
 
 -- =============================================
--- Realtime: cambios en vivo para lobby y juego
+-- Realtime: cambios en vivo para lobby y juego.
+-- replica identity full para que los UPDATE lleven el registro viejo/nuevo.
 -- =============================================
+alter table preguntas.questions replica identity full;
+alter table preguntas.games    replica identity full;
+alter table preguntas.players  replica identity full;
+alter table preguntas.answers  replica identity full;
 alter publication supabase_realtime add table preguntas.questions;
 alter publication supabase_realtime add table preguntas.games;
 alter publication supabase_realtime add table preguntas.players;
