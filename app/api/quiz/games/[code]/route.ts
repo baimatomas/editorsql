@@ -4,6 +4,7 @@ import { teacherFromAuthHeader } from '../../lib/quizAuth'
 
 type GameAction =
   | { action: 'start' | 'next' }           // avanza a la siguiente pregunta
+  | { action: 'skip' }                      // corta el tiempo de la pregunta actual
   | { action: 'end' }                       // finaliza la partida
   | { action: 'scores'; scores: Array<{ id: string; score: number; streak: number }> }
 
@@ -32,9 +33,37 @@ export async function PATCH(request: Request, { params }: { params: { code: stri
       if (game.status === 'ended') throw new Error('La partida ya terminó')
 
       const nextIndex = body.action === 'start' ? 0 : (game.current_question as number) + 1
+      // El tiempo de la pregunta lo define el servidor (question_ends_at):
+      // todos los clientes calculan el reloj desde ahí.
+      const { data: questions } = await supabase
+        .from('questions')
+        .select('time_limit')
+        .order('order_position', { ascending: true })
+      const q = questions?.[nextIndex]
+      if (!q) throw new Error('No hay una pregunta en esa posición')
+      const endsAt = new Date(Date.now() + (q.time_limit as number) * 1000).toISOString()
+
       const { data, error } = await supabase
         .from('games')
-        .update({ status: 'running', current_question: nextIndex, question_started_at: new Date().toISOString() })
+        .update({
+          status: 'running',
+          current_question: nextIndex,
+          question_started_at: new Date().toISOString(),
+          question_ends_at: endsAt,
+        })
+        .eq('code', code)
+        .select()
+        .single()
+      if (error) throw error
+      return NextResponse.json({ game: data })
+    }
+
+    if (body.action === 'skip') {
+      // Corta el tiempo de la pregunta actual: todos los clientes ven
+      // el reloj en 0 y pasan a los resultados.
+      const { data, error } = await supabase
+        .from('games')
+        .update({ question_ends_at: new Date().toISOString() })
         .eq('code', code)
         .select()
         .single()

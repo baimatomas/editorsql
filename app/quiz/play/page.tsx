@@ -3,16 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Hourglass, WifiOff } from 'lucide-react'
+import { Loader2, Hourglass, WifiOff, Eye } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { computePoints, PLAYER_SESSION_KEY } from '../lib/game'
-import type { PlayerSession } from '../lib/types'
-import type { QuizAnswer, QuizGame, QuizQuestion } from '../lib/types'
+import type { PlayerSession, QuizAnswer, QuizGame, QuizQuestion } from '../lib/types'
 import TimerRing from '../components/TimerRing'
-import AnswerGrid, { type RevealState } from '../components/AnswerGrid'
+import AnswerGrid from '../components/AnswerGrid'
+import QuestionResults from '../components/QuestionResults'
 import Podium from '../components/Podium'
 
-type Phase = 'waiting' | 'question' | 'answered' | 'feedback' | 'ended'
+type Phase = 'waiting' | 'question' | 'answered' | 'results' | 'ended'
 
 export default function QuizPlay() {
   const router = useRouter()
@@ -23,9 +23,9 @@ export default function QuizPlay() {
   const [phase, setPhase] = useState<Phase>('waiting')
   const [secondsLeft, setSecondsLeft] = useState(0)
   const [chosen, setChosen] = useState<number | null>(null)
-  const [reveal, setReveal] = useState<RevealState>('none')
   const [earned, setEarned] = useState(0)
   const [myStreak, setMyStreak] = useState(0)
+  const [questionAnswers, setQuestionAnswers] = useState<QuizAnswer[]>([])
   const [players, setPlayers] = useState<{ id: string; nickname: string; score: number; streak: number }[]>([])
   const [disconnected, setDisconnected] = useState(false)
 
@@ -117,8 +117,8 @@ export default function QuizPlay() {
         shownQuestionRef.current = game.current_question
         startRef.current = Date.now()
         setChosen(null)
-        setReveal('none')
         setEarned(0)
+        setQuestionAnswers([])
         const q = questions[game.current_question]
         setSecondsLeft(q?.time_limit ?? 20)
         setPhase('question')
@@ -128,28 +128,48 @@ export default function QuizPlay() {
     }
   }, [game, questions])
 
-  // Timer local de la pregunta
+  // Timer local de la pregunta: lo define question_ends_at (el docente puede cortarlo antes)
   useEffect(() => {
-    if (phase !== 'question' || !game || game.current_question < 0) return
-    const q = questions[game.current_question]
-    if (!q || !game.question_started_at) return
-    const endsAt = new Date(game.question_started_at).getTime() + q.time_limit * 1000
+    if ((phase !== 'question' && phase !== 'answered') || !game || game.current_question < 0) return
+    if (!game.question_ends_at) return
+    const endsAt = new Date(game.question_ends_at).getTime()
     const id = setInterval(() => {
       const left = Math.ceil((endsAt - Date.now()) / 1000)
       setSecondsLeft(left)
       if (left <= 0) clearInterval(id)
     }, 250)
     return () => clearInterval(id)
-  }, [phase, game?.current_question, game?.question_started_at, questions])
+  }, [phase, game?.current_question, game?.question_ends_at])
 
-  // Al acabarse el tiempo sin responder → feedback
+  // Al acabarse el tiempo (o si el docente corta) → resultados
   useEffect(() => {
-    if (phase === 'question' && secondsLeft <= 0) {
-      setReveal('wrong')
-      setMyStreak(0)
-      setPhase('feedback')
+    if ((phase === 'question' || phase === 'answered') && secondsLeft <= 0) {
+      setPhase('results')
     }
   }, [secondsLeft, phase])
+
+  // Resultados: respuestas de la pregunta + puntaje acumulado (polling liviano)
+  useEffect(() => {
+    if (phase !== 'results' || !session || !game || game.current_question < 0) return
+    const qi = game.current_question
+    const fetchResults = async () => {
+      const { data: ans } = await supabase
+        .from('answers')
+        .select('*')
+        .eq('game_code', session.gameCode)
+        .eq('question_index', qi)
+      const { data: pls } = await supabase
+        .from('players')
+        .select('id, nickname, score, streak')
+        .eq('game_code', session.gameCode)
+        .order('score', { ascending: false })
+      if (ans) setQuestionAnswers(ans as QuizAnswer[])
+      if (pls) setPlayers(pls)
+    }
+    fetchResults()
+    const id = setInterval(fetchResults, 2500)
+    return () => clearInterval(id)
+  }, [phase, session, game?.current_question])
 
   const answer = useCallback(
     async (optionIndex: number) => {
@@ -178,7 +198,7 @@ export default function QuizPlay() {
         console.error('answers insert:', insErr)
       }
 
-      // Feedback inmediato (el resultado completo llega con la revelación)
+      // El resultado completo se muestra cuando termina el tiempo (fase results)
       setTimeout(() => {
         if (isCorrect) {
           setEarned(points)
@@ -186,8 +206,6 @@ export default function QuizPlay() {
         } else {
           setMyStreak(0)
         }
-        setReveal(isCorrect ? 'correct' : 'wrong')
-        setPhase('feedback')
       }, 400)
     },
     [session, game, questions, chosen, myStreak]
@@ -273,56 +291,38 @@ export default function QuizPlay() {
           >
             <div className="animate-float-up text-4xl">📨</div>
             <h2 className="text-2xl font-bold mb-2">¡Respuesta enviada!</h2>
-            <p className="text-violet-200/50">Esperando el resto de la clase...</p>
+            <p className="text-violet-200/50 mb-4">Esperando el resto de la clase...</p>
+            {current && (
+              <div className="scale-75 origin-top">
+                <TimerRing secondsLeft={secondsLeft} total={current.time_limit} size={64} />
+              </div>
+            )}
           </motion.div>
         )}
 
-        {/* Feedback */}
-        {phase === 'feedback' && (
+        {/* Resultados de la pregunta */}
+        {phase === 'results' && current && (
           <motion.div
-            key="feedback"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
+            key="results"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex flex-col items-center justify-center text-center"
+            className="w-full max-w-2xl"
           >
-            {reveal === 'correct' ? (
-              <>
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.3, 1], rotate: [0, 8, 0] }}
-                  transition={{ duration: 0.5 }}
-                  className="text-7xl mb-4"
-                >
-                  ✅
-                </motion.div>
-                <h2 className="text-3xl font-bold text-emerald-300 mb-1">¡Correcto!</h2>
-                <p className="text-xl font-bold text-fuchsia-200 tabular-nums animate-pop-in">
-                  +{earned.toLocaleString('es-AR')} puntos
-                </p>
-                {myStreak >= 2 && (
-                  <p className="text-orange-300 text-sm font-bold mt-2 animate-pop-in">
-                    🔥 racha x{myStreak}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: [0, 1.2, 1] }}
-                  transition={{ duration: 0.5 }}
-                  className="text-7xl mb-4"
-                >
-                  ❌
-                </motion.div>
-                <h2 className="text-3xl font-bold text-rose-300 mb-1">
-                  {chosen === null ? 'Se acabó el tiempo' : 'Incorrecto'}
-                </h2>
-                <p className="text-violet-200/50">¡La próxima seguro!</p>
-              </>
-            )}
-            <p className="text-violet-200/40 text-sm mt-6">Esperando al docente...</p>
+            <div className="flex items-center justify-center gap-2 mb-6 text-amber-300">
+              <Eye size={15} />
+              <span className="text-xs uppercase tracking-[0.3em]">Resultados de la pregunta</span>
+            </div>
+            <QuestionResults
+              question={current}
+              answers={questionAnswers}
+              players={players}
+              myPlayerId={session!.playerId}
+              myChosen={chosen}
+              myEarned={earned}
+              myStreak={myStreak}
+            />
+            <p className="text-center text-violet-200/40 text-sm mt-8">Esperando al docente...</p>
           </motion.div>
         )}
 

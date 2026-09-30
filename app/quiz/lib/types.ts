@@ -14,6 +14,7 @@ export interface QuizGame {
   status: GameStatus
   current_question: number
   question_started_at: string | null
+  question_ends_at: string | null
   created_at: string
   ended_at: string | null
 }

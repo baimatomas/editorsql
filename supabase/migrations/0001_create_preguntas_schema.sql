@@ -23,6 +23,7 @@ create table if not exists preguntas.games (
   status              text not null default 'lobby' check (status in ('lobby', 'running', 'ended')),
   current_question    smallint not null default -1,
   question_started_at timestamptz,
+  question_ends_at    timestamptz,
   created_at          timestamptz not null default now(),
   ended_at            timestamptz
 );

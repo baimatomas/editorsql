@@ -10,8 +10,8 @@ import { apiQuiz, isAdmin, loginTeacher } from '../lib/api'
 import type { QuizAnswer, QuizGame, QuizPlayer, QuizQuestion } from '../lib/types'
 import TimerRing from '../components/TimerRing'
 import AnswerGrid from '../components/AnswerGrid'
-import Scoreboard, { type ScoreRow } from '../components/Scoreboard'
 import Podium from '../components/Podium'
+import QuestionResults from '../components/QuestionResults'
 
 type Phase = 'idle' | 'lobby' | 'question' | 'reveal' | 'podium'
 
@@ -118,12 +118,10 @@ export default function QuizHost() {
     }, 800)
   }, [answers, phase, recomputeScores])
 
-  // Timer de la pregunta
+  // Timer de la pregunta: lo define question_ends_at (el docente puede cortarlo antes)
   useEffect(() => {
-    if (phase !== 'question' || !game?.question_started_at) return
-    const q = questions[game.current_question]
-    if (!q) return
-    const endsAt = new Date(game.question_started_at).getTime() + q.time_limit * 1000
+    if (phase !== 'question' || !game?.question_ends_at) return
+    const endsAt = new Date(game.question_ends_at).getTime()
     const tick = () => {
       const left = Math.ceil((endsAt - Date.now()) / 1000)
       setSecondsLeft(left)
@@ -134,7 +132,7 @@ export default function QuizHost() {
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)
-  }, [phase, game?.question_started_at, game?.current_question, questions])
+  }, [phase, game?.question_ends_at, game?.current_question])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -173,7 +171,7 @@ export default function QuizHost() {
     }
   }
 
-  const sendAction = async (action: 'start' | 'next' | 'end') => {
+  const sendAction = async (action: 'start' | 'next' | 'skip' | 'end') => {
     try {
       const { game: g } = await apiQuiz<{ game: QuizGame }>(`/api/quiz/games/${game!.code}`, {
         method: 'PATCH',
@@ -181,7 +179,10 @@ export default function QuizHost() {
       })
       setGame(g)
       if (action === 'end') setPhase('podium')
-      else {
+      else if (action === 'skip') {
+        // el UPDATE por realtime dispara el timer en 0 → reveal
+        setSecondsLeft(0)
+      } else {
         setAnswers([]) // respuestas por pregunta
         setSecondsLeft(questions[g.current_question]?.time_limit ?? 20)
         setPhase('question')
@@ -353,9 +354,23 @@ export default function QuizHost() {
 
               <AnswerGrid options={current.options} counts={counts} columns={2} />
 
-              <div className="mt-8 flex items-center justify-center gap-2 text-sm text-violet-200/50">
-                <Users size={15} />
-                {answersForCurrent.length} de {players.length} respondieron
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <div className="flex items-center gap-2 text-sm text-violet-200/50">
+                  <Users size={15} />
+                  {answersForCurrent.length} de {players.length} respondieron
+                </div>
+                <button
+                  onClick={() => sendAction('skip')}
+                  className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-sm border transition-all
+                              ${answersForCurrent.length >= players.length && players.length > 0
+                                ? 'border-emerald-300/60 bg-emerald-500/20 text-emerald-200 animate-glow-pulse'
+                                : 'border-violet-400/30 text-violet-200/70 hover:bg-violet-500/20'}`}
+                >
+                  <SkipForward size={15} />
+                  {answersForCurrent.length >= players.length && players.length > 0
+                    ? '¡Todos respondieron! Terminar pregunta'
+                    : 'Terminar pregunta ahora'}
+                </button>
               </div>
             </motion.div>
           )}
@@ -365,30 +380,21 @@ export default function QuizHost() {
             <motion.div key={`r-${game.current_question}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <div className="flex items-center justify-center gap-2 mb-6 text-amber-300">
                 <Eye size={16} />
-                <span className="text-xs uppercase tracking-[0.3em]">Resultados</span>
+                <span className="text-xs uppercase tracking-[0.3em]">Resultados · Pregunta {game.current_question + 1}</span>
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-center mb-8">{current.prompt}</h2>
 
-              <AnswerGrid
-                options={current.options}
-                counts={counts}
-                correctIndex={current.correct_index}
-                reveal="correct"
-                columns={2}
+              <QuestionResults
+                question={current}
+                answers={answersForCurrent}
+                players={players.map((p) => ({
+                  id: p.id,
+                  nickname: p.nickname,
+                  score: scores[p.id] ?? 0,
+                  streak: streaks[p.id] ?? 0,
+                }))}
               />
 
-              <div className="my-8">
-                <Scoreboard
-                  rows={players.map((p) => ({
-                    id: p.id,
-                    nickname: p.nickname,
-                    score: scores[p.id] ?? 0,
-                    streak: streaks[p.id] ?? 0,
-                  }))}
-                />
-              </div>
-
-              <div className="flex justify-center gap-3">
+              <div className="flex justify-center gap-3 mt-8">
                 <button
                   onClick={() => sendAction('next')}
                   disabled={game.current_question >= questions.length - 1}
