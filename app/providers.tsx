@@ -99,6 +99,15 @@ export function useDB() {
   return ctx
 }
 
+// Singleton de PGlite: el Strict Mode de React monta los efectos dos veces en
+// dev, y una segunda instancia intenta recompilar el WASM ya consumido, tirando
+// "Cannot compile WebAssembly.Module from an already read Response".
+let pgliteSingleton: PGlite | null = null
+function getPGlite(): PGlite {
+  if (!pgliteSingleton) pgliteSingleton = new PGlite()
+  return pgliteSingleton
+}
+
 export function DBProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<PGlite | null>(null)
   const [ready, setReady] = useState(false)
@@ -170,7 +179,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const pglite = new PGlite()
+        const pglite = getPGlite()
         setDb(pglite)
         setReady(true)
       } catch (e) {
