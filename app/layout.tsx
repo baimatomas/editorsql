@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { DBProvider } from './providers'
 
 export const metadata: Metadata = {
   title: 'EditorSQL - Práctica PostgreSQL',
@@ -15,9 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>
-        <DBProvider>{children}</DBProvider>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }

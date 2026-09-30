@@ -2,7 +2,8 @@
 
 import { Shield, ShieldOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { FilePlus, Save, SaveAll, FolderOpen, Sun, Moon } from 'lucide-react'
+import { FilePlus, Save, SaveAll, FolderOpen, Sun, Moon, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 import Button from '@/app/components/ui/Button'
 import AdminLogin from '@/app/components/AdminLogin'
 
@@ -145,6 +146,14 @@ export default function Header({
             <FolderOpen size={13} />
             Abrir
           </Button>
+          <Link
+            href="/quiz"
+            title="Ir a la sección de Preguntas"
+            className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium border border-fuchsia-400/40 bg-gradient-to-r from-fuchsia-600/30 to-violet-600/30 text-fuchsia-100 hover:from-fuchsia-600/60 hover:to-violet-600/60 hover:border-fuchsia-300/60 transition-all duration-150"
+          >
+            <Sparkles size={13} />
+            Preguntas
+          </Link>
           <div className="border-l border-white/10 h-5 mx-1" />
           {isAdmin ? (
             <div className="relative group">
