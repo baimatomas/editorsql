@@ -173,6 +173,25 @@ export default function QuizHost() {
 
   const sendAction = async (action: 'start' | 'next' | 'skip' | 'end') => {
     try {
+      // Al finalizar, persistir los puntajes ANTES de cerrar la partida:
+      // el podio de los alumnos se lee de la tabla players.
+      if (action === 'end') {
+        try {
+          const { totals, streak: streakMap } = recomputeScores()
+          await apiQuiz(`/api/quiz/games/${game!.code}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              action: 'scores',
+              scores: playersRef.current.map((p) => ({
+                id: p.id,
+                score: totals[p.id] ?? 0,
+                streak: streakMap[p.id] ?? 0,
+              })),
+            }),
+          })
+        } catch { /* el polling del alumno converge igual */ }
+      }
+
       const { game: g } = await apiQuiz<{ game: QuizGame }>(`/api/quiz/games/${game!.code}`, {
         method: 'PATCH',
         body: JSON.stringify({ action }),
@@ -183,7 +202,8 @@ export default function QuizHost() {
         // el UPDATE por realtime dispara el timer en 0 → reveal
         setSecondsLeft(0)
       } else {
-        setAnswers([]) // respuestas por pregunta
+        // NO se resetean las respuestas: recomputeScores acumula el puntaje
+        // de todas las preguntas; el filtro por pregunta es answersForCurrent.
         setSecondsLeft(questions[g.current_question]?.time_limit ?? 20)
         setPhase('question')
       }

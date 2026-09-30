@@ -101,15 +101,7 @@ export default function QuizPlay() {
     if (!game) return
     if (game.status === 'ended') {
       setPhase('ended')
-      // Trae el podio con puntajes persistidos por el docente
-      supabase
-        .from('players')
-        .select('id, nickname, score, streak')
-        .eq('game_code', game.code)
-        .order('score', { ascending: false })
-        .then(({ data }) => {
-          if (data) setPlayers(data)
-        })
+      // Los puntajes del podio los trae el polling de la fase 'ended'
       return
     }
     if (game.status === 'running' && game.current_question >= 0) {
@@ -153,23 +145,60 @@ export default function QuizPlay() {
     if (phase !== 'results' || !session || !game || game.current_question < 0) return
     const qi = game.current_question
     const fetchResults = async () => {
-      const { data: ans } = await supabase
+      const { data: ans, error: ansErr } = await supabase
         .from('answers')
         .select('*')
         .eq('game_code', session.gameCode)
         .eq('question_index', qi)
-      const { data: pls } = await supabase
+      const { data: pls, error: plsErr } = await supabase
         .from('players')
         .select('id, nickname, score, streak')
         .eq('game_code', session.gameCode)
         .order('score', { ascending: false })
+      if (ansErr) console.error('results answers:', ansErr)
+      if (plsErr) console.error('results players:', plsErr)
       if (ans) setQuestionAnswers(ans as QuizAnswer[])
-      if (pls) setPlayers(pls)
+      if (pls && pls.length > 0) setPlayers(pls)
     }
     fetchResults()
     const id = setInterval(fetchResults, 2500)
     return () => clearInterval(id)
   }, [phase, session, game?.current_question])
+
+  // Podio: polling con reintento hasta que los puntajes estén persistidos
+  useEffect(() => {
+    if (phase !== 'ended' || !session) return
+    const fetchPlayers = async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('id, nickname, score, streak')
+        .eq('game_code', session.gameCode)
+        .order('score', { ascending: false })
+      if (error) {
+        console.error('podium players:', error)
+        return
+      }
+      if (data && data.length > 0) setPlayers(data)
+    }
+    fetchPlayers()
+    const id = setInterval(fetchPlayers, 2000)
+    return () => clearInterval(id)
+  }, [phase, session])
+
+  // Fallback anti-realtime: si el teléfono suspendió la pestaña o se perdió
+  // un evento, el estado de la partida se sincroniza por polling cada 5s.
+  useEffect(() => {
+    if (!ready || !session) return
+    const id = setInterval(async () => {
+      const { data: g } = await supabase
+        .from('games')
+        .select('*')
+        .eq('code', session.gameCode)
+        .maybeSingle()
+      if (g) setGame(g as QuizGame)
+    }, 5000)
+    return () => clearInterval(id)
+  }, [ready, session])
 
   const answer = useCallback(
     async (optionIndex: number) => {
