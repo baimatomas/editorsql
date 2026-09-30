@@ -16,5 +16,7 @@ export function getSupabaseAdmin() {
 
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
+    // Todas las tablas del juego viven en el schema "preguntas"
+    db: { schema: 'preguntas' },
   })
 }

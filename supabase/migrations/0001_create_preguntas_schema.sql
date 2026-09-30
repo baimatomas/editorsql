@@ -75,6 +75,25 @@ create policy "players_insert"  on preguntas.players for insert to anon with che
 create policy "answers_insert"  on preguntas.answers for insert to anon with check (true);
 
 -- =============================================
+-- Grants: los roles de la API necesitan USAGE sobre el schema custom.
+-- (Requiere además exponer "preguntas" en Settings → API → Exposed schemas)
+-- =============================================
+grant usage on schema preguntas to anon, authenticated, service_role;
+
+-- service_role (API routes del docente): acceso total
+grant all on all tables in schema preguntas to service_role;
+
+-- anon (alumnos): select + insert de jugadores/respuestas.
+-- Las policies RLS restringen a nivel de fila.
+grant select on all tables in schema preguntas to anon, authenticated;
+grant insert on preguntas.players, preguntas.answers to anon, authenticated;
+
+-- Futuras tablas del schema heredan los grants
+alter default privileges in schema preguntas grant all on tables to service_role;
+alter default privileges in schema preguntas grant select on tables to anon, authenticated;
+alter default privileges in schema preguntas grant insert on tables to anon, authenticated;
+
+-- =============================================
 -- Realtime: cambios en vivo para lobby y juego
 -- =============================================
 alter publication supabase_realtime add table preguntas.questions;
