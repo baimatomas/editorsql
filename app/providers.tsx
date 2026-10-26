@@ -108,6 +108,19 @@ function getPGlite(): PGlite {
   return pgliteSingleton
 }
 
+// Por defecto PGlite convierte las columnas date/timestamp en objetos Date de
+// JavaScript, que se desplazan según la zona horaria del navegador (por
+// ejemplo, un DATE '2024-01-01' termina mostrándose como 31/12/2023 en UTC-3).
+// Pedimos el texto original que envía Postgres para mostrar exactamente el
+// valor insertado, sin conversiones de zona horaria.
+const RAW_DATE_QUERY_OPTIONS = {
+  parsers: {
+    1082: (value: string) => value, // date
+    1114: (value: string) => value, // timestamp
+    1184: (value: string) => value, // timestamptz
+  },
+}
+
 export function DBProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<PGlite | null>(null)
   const [ready, setReady] = useState(false)
@@ -393,7 +406,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
       dump += `CREATE TABLE "${name}" (\n  ${colDefs.join(',\n  ')}\n);\n`
 
       // Data
-      const dataResult = await db.query(`SELECT * FROM "${name}"`)
+      const dataResult = await db.query(`SELECT * FROM "${name}"`, undefined, RAW_DATE_QUERY_OPTIONS)
       const rows = dataResult.rows as Record<string, unknown>[]
       if (rows.length === 0) continue
 
@@ -492,7 +505,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
             if (isQueryStmt(stmt)) {
               const hasExplicitLimit = /\s+LIMIT\s+\d+(?:\s+OFFSET\s+\d+)?\s*$/i.test(stmt)
               if (hasExplicitLimit) {
-                const result = await db.query(stmt)
+                const result = await db.query(stmt, undefined, RAW_DATE_QUERY_OPTIONS)
                 lastQueryResult = result.rows as unknown[]
                 lastQueryColumns = result.fields
                 lastTotal = 0
@@ -503,7 +516,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
                 } catch {
                   lastTotal = 0
                 }
-                const result = await db.query(`${stmt} LIMIT ${PAGE_SIZE} OFFSET 0`)
+                const result = await db.query(`${stmt} LIMIT ${PAGE_SIZE} OFFSET 0`, undefined, RAW_DATE_QUERY_OPTIONS)
                 lastQueryResult = result.rows as unknown[]
                 lastQueryColumns = result.fields
               }
@@ -545,7 +558,7 @@ export function DBProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     const start = performance.now()
     try {
-      const result = await db.query(`${execSqlRef.current} LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}`)
+      const result = await db.query(`${execSqlRef.current} LIMIT ${PAGE_SIZE} OFFSET ${page * PAGE_SIZE}`, undefined, RAW_DATE_QUERY_OPTIONS)
       setQueryResult(result.rows as unknown[])
       setQueryColumns(result.fields)
       setCurrentPage(page)
